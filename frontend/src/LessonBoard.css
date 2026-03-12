@@ -1,0 +1,396 @@
+.lesson-board {
+  padding: 1rem;
+  background: #f5f6f8;
+  min-height: 100vh;
+}
+
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.board-header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.add-module-btn {
+  padding: 0.5rem 1rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.add-module-btn:hover {
+  background: #0056b3;
+}
+
+.modules-container {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  min-height: 600px;
+}
+
+.module-lane {
+  flex: 0 0 350px;
+  background: #ebecf0;
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: move;
+  transition: all 0.2s ease;
+}
+
+.module-lane:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.module-lane.collapsed {
+  flex: 0 0 200px;
+}
+
+.module-lane.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}
+
+.module-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 4px;
+}
+
+.module-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.drag-handle {
+  color: #666;
+  cursor: grab;
+  font-size: 0.8rem;
+}
+
+.drag-handle:hover {
+  color: #333;
+}
+
+.module-title h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #333;
+  flex: 1;
+  cursor: pointer;
+}
+
+.module-title h3:hover {
+  color: #007bff;
+}
+
+.module-name-input {
+  flex: 1;
+  padding: 0.25rem;
+  border: 1px solid #007bff;
+  border-radius: 3px;
+  font-size: 1rem;
+  background: white;
+}
+
+.lesson-count {
+  color: #666;
+  font-size: 0.8rem;
+  font-weight: normal;
+}
+
+.module-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.collapse-btn,
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.collapse-btn:hover {
+  background: #f0f0f0;
+}
+
+.delete-btn:hover {
+  background: #ffebee;
+}
+
+.lessons-container {
+  min-height: 50px;
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+.lesson-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  cursor: move;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.2s ease;
+}
+
+.lesson-card .btn-link {
+  text-decoration: none;
+}
+
+.lesson-card .btn-link:hover {
+  text-decoration: none;
+}
+
+.lesson-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.lesson-card.dragging {
+  opacity: 0.5;
+  transform: rotate(2deg);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.card-header h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #333;
+  flex: 1;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.card-header h4:hover {
+  color: #007bff;
+}
+
+.lesson-title-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #007bff;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: white;
+  margin: 0;
+}
+
+.lesson-card.editing {
+  box-shadow: 0 0 0 2px #007bff;
+}
+
+.card-menu {
+  position: relative;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  color: #666;
+}
+
+.menu-btn:hover {
+  background: #f0f0f0;
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 200px;
+}
+
+.menu-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #333;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.menu-dropdown button:hover {
+  background: #f8f9fa;
+}
+
+.menu-dropdown button.current {
+  background: #e3f2fd;
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.menu-dropdown button.delete-option {
+  color: #dc3545;
+  border-top: 1px solid #ffebee;
+}
+
+.menu-dropdown button.delete-option:hover {
+  background: #ffebee;
+}
+
+.menu-dropdown button:last-child {
+  border-bottom: none;
+}
+
+.card-content {
+  font-size: 0.8rem;
+}
+
+.material-section {
+  margin-bottom: 0.5rem;
+}
+
+.material-section strong {
+  display: block;
+  color: #555;
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.links a {
+  color: #007bff;
+  text-decoration: none;
+  word-break: break-all;
+  font-size: 0.75rem;
+  padding: 0.25rem;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.links a:hover {
+  background: #f0f8ff;
+  text-decoration: underline;
+}
+
+.material-section textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.material-section textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.empty-module {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  color: #999;
+  font-style: italic;
+  border: 2px dashed #ddd;
+  border-radius: 4px;
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.8rem;
+}
+
+.add-lesson-btn {
+  width: 100%;
+  padding: 1rem;
+  background: #f8f9fa;
+  border: 2px dashed #007bff;
+  border-radius: 4px;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.add-lesson-btn:hover {
+  background: #e3f2fd;
+  border-color: #0056b3;
+}
+
+/* Drag and drop visual feedback */
+.module-lane.drag-over {
+  background: #e3f2fd;
+  border: 2px dashed #1976d2;
+}
+
+.lessons-container.drag-over {
+  background: #f0f8ff;
+  border: 2px dashed #007bff;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .modules-container {
+    flex-direction: column;
+  }
+  
+  .module-lane {
+    flex: 1;
+    width: 100%;
+  }
+  
+  .board-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .add-module {
+    justify-content: center;
+  }
+}
