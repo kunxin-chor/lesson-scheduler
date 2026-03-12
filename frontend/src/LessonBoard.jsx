@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Card, Button, Form, Badge } from 'react-bootstrap'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import {
   DndContext,
   DragOverlay,
@@ -97,6 +99,13 @@ function SortableLesson({ lesson, onEdit, onDelete, onMove, modules, moduleId, o
     setFieldValue('')
   }
 
+  const handleBlur = (e) => {
+    // Check if the new focus target is within the edit container (Save/Cancel buttons)
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      saveField()
+    }
+  }
+
   return (
     <div
       ref={setNodeRef}
@@ -105,7 +114,7 @@ function SortableLesson({ lesson, onEdit, onDelete, onMove, modules, moduleId, o
     >
       <div className="card-header">
         {editingField === 'title' ? (
-          <div style={{ flex: 1, display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <div style={{ flex: 1, display: 'flex', gap: '0.5rem', alignItems: 'center' }} onBlur={handleBlur}>
             <Form.Control
               type="text"
               value={fieldValue}
@@ -119,26 +128,32 @@ function SortableLesson({ lesson, onEdit, onDelete, onMove, modules, moduleId, o
           </div>
         ) : (
           <>
-            <h4 {...attributes} {...listeners} style={{ cursor: 'grab', flex: 1 }}>
-              ☰ {lesson.title}
+            <span 
+              {...attributes} 
+              {...listeners} 
+              style={{ cursor: 'grab', marginRight: '8px' }}
+              title="Drag to move"
+            >
+              ☰
+            </span>
+            <h4 
+              style={{ cursor: 'pointer', flex: 1, margin: 0 }}
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              title="Click to collapse/expand"
+            >
+              {lesson.title}
             </h4>
             <Button
               variant="link"
               size="sm"
               className="p-0 me-2"
-              onClick={() => startEditField('title')}
+              onClick={(e) => {
+                e.stopPropagation()
+                startEditField('title')
+              }}
               title="Edit title"
             >
               ✎
-            </Button>
-            <Button
-              variant="link"
-              size="sm"
-              className="p-0 me-2"
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              title={isCollapsed ? "Expand" : "Collapse"}
-            >
-              {isCollapsed ? '▾' : '▴'}
             </Button>
           </>
         )}
@@ -191,13 +206,13 @@ function SortableLesson({ lesson, onEdit, onDelete, onMove, modules, moduleId, o
               </Button>
             </div>
             {editingField === 'prelearningMaterials' ? (
-              <div>
+              <div onBlur={handleBlur}>
                 <Form.Control
                   as="textarea"
-                  rows={3}
+                  rows={5}
                   value={fieldValue}
                   onChange={(e) => setFieldValue(e.target.value)}
-                  placeholder="Add links (one per line)"
+                  placeholder="Use markdown formatting (links, lists, bold, etc.)"
                   autoFocus
                   size="sm"
                 />
@@ -207,13 +222,14 @@ function SortableLesson({ lesson, onEdit, onDelete, onMove, modules, moduleId, o
                 </div>
               </div>
             ) : (
-              <div className="links">
-                {lesson.prelearningMaterials?.split('\n').filter(link => link.trim()).map((link, i) => (
-                  <a key={i} href={link} target="_blank" rel="noopener noreferrer">
-                    {link}
-                  </a>
-                ))}
-                {!lesson.prelearningMaterials && <span className="text-muted">No materials added</span>}
+              <div className="markdown-content">
+                {lesson.prelearningMaterials ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {lesson.prelearningMaterials}
+                  </ReactMarkdown>
+                ) : (
+                  <span className="text-muted">No materials added</span>
+                )}
               </div>
             )}
           </div>
@@ -233,13 +249,13 @@ function SortableLesson({ lesson, onEdit, onDelete, onMove, modules, moduleId, o
               </Button>
             </div>
             {editingField === 'guidedInstructions' ? (
-              <div>
+              <div onBlur={handleBlur}>
                 <Form.Control
                   as="textarea"
-                  rows={3}
+                  rows={5}
                   value={fieldValue}
                   onChange={(e) => setFieldValue(e.target.value)}
-                  placeholder="Add links (one per line)"
+                  placeholder="Use markdown formatting (links, lists, bold, etc.)"
                   autoFocus
                   size="sm"
                 />
@@ -249,13 +265,14 @@ function SortableLesson({ lesson, onEdit, onDelete, onMove, modules, moduleId, o
                 </div>
               </div>
             ) : (
-              <div className="links">
-                {lesson.guidedInstructions?.split('\n').filter(link => link.trim()).map((link, i) => (
-                  <a key={i} href={link} target="_blank" rel="noopener noreferrer">
-                    {link}
-                  </a>
-                ))}
-                {!lesson.guidedInstructions && <span className="text-muted">No instructions added</span>}
+              <div className="markdown-content">
+                {lesson.guidedInstructions ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {lesson.guidedInstructions}
+                  </ReactMarkdown>
+                ) : (
+                  <span className="text-muted">No instructions added</span>
+                )}
               </div>
             )}
           </div>
@@ -275,13 +292,13 @@ function SortableLesson({ lesson, onEdit, onDelete, onMove, modules, moduleId, o
               </Button>
             </div>
             {editingField === 'handsOnActivities' ? (
-              <div>
+              <div onBlur={handleBlur}>
                 <Form.Control
                   as="textarea"
-                  rows={3}
+                  rows={5}
                   value={fieldValue}
                   onChange={(e) => setFieldValue(e.target.value)}
-                  placeholder="Add links (one per line)"
+                  placeholder="Use markdown formatting (links, lists, bold, etc.)"
                   autoFocus
                   size="sm"
                 />
@@ -291,13 +308,14 @@ function SortableLesson({ lesson, onEdit, onDelete, onMove, modules, moduleId, o
                 </div>
               </div>
             ) : (
-              <div className="links">
-                {lesson.handsOnActivities?.split('\n').filter(link => link.trim()).map((link, i) => (
-                  <a key={i} href={link} target="_blank" rel="noopener noreferrer">
-                    {link}
-                  </a>
-                ))}
-                {!lesson.handsOnActivities && <span className="text-muted">No activities added</span>}
+              <div className="markdown-content">
+                {lesson.handsOnActivities ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {lesson.handsOnActivities}
+                  </ReactMarkdown>
+                ) : (
+                  <span className="text-muted">No activities added</span>
+                )}
               </div>
             )}
           </div>
@@ -310,6 +328,7 @@ function SortableLesson({ lesson, onEdit, onDelete, onMove, modules, moduleId, o
 function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpdate, editable = true }) {
   const [editingLesson, setEditingLesson] = useState(null)
   const [editingModule, setEditingModule] = useState(null)
+  const [editingModuleName, setEditingModuleName] = useState('')
   const [activeId, setActiveId] = useState(null)
 
   const sensors = useSensors(
@@ -391,11 +410,20 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
     onModulesUpdate([...modules, newModule])
   }
 
-  const updateModuleName = (moduleId, name) => {
-    onModulesUpdate(modules.map(module =>
-      module.id === moduleId ? { ...module, name } : module
-    ))
-    setEditingModule(null)
+  const startEditingModule = (moduleId) => {
+    const module = modules.find(m => m.id === moduleId)
+    setEditingModule(moduleId)
+    setEditingModuleName(module.name)
+  }
+
+  const saveModuleName = () => {
+    if (editingModule) {
+      onModulesUpdate(modules.map(module =>
+        module.id === editingModule ? { ...module, name: editingModuleName } : module
+      ))
+      setEditingModule(null)
+      setEditingModuleName('')
+    }
   }
 
   const toggleModuleCollapse = (moduleId) => {
@@ -490,17 +518,17 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
                         {editingModule === module.id ? (
                           <Form.Control
                             type="text"
-                            value={module.name}
-                            onChange={(e) => updateModuleName(module.id, e.target.value)}
-                            onBlur={() => setEditingModule(null)}
-                            onKeyPress={(e) => e.key === 'Enter' && setEditingModule(null)}
+                            value={editingModuleName}
+                            onChange={(e) => setEditingModuleName(e.target.value)}
+                            onBlur={saveModuleName}
+                            onKeyPress={(e) => e.key === 'Enter' && saveModuleName()}
                             autoFocus
                             size="sm"
                             style={{ flex: 1 }}
                           />
                         ) : (
                           <h3 
-                            onDoubleClick={() => editable && setEditingModule(module.id)}
+                            onDoubleClick={() => editable && startEditingModule(module.id)}
                             style={{ cursor: editable ? 'pointer' : 'default', flex: 1 }}
                             title="Double-click to edit"
                           >
