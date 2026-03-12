@@ -357,7 +357,9 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
       const newIndex = modules.findIndex(m => m.id === over.id)
       
       if (oldIndex !== newIndex) {
-        onModulesUpdate(arrayMove(modules, oldIndex, newIndex))
+        const reorderedModules = arrayMove(modules, oldIndex, newIndex)
+          .map((module, index) => ({ ...module, order: index }))
+        onModulesUpdate(reorderedModules, true) // Structural change
       }
     }
     // Handle lesson reordering or moving between modules
@@ -375,13 +377,23 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
         const overIndex = lessons.indexOf(overLesson)
         
         // Update the moduleId if moving to a different module
-        const updatedLessons = arrayMove(lessons, activeIndex, overIndex).map(lesson =>
+        let updatedLessons = arrayMove(lessons, activeIndex, overIndex).map(lesson =>
           lesson.id === activeLesson.id
-            ? { ...lesson, moduleId: overLesson.moduleId }
+            ? { ...lesson, moduleId: overLesson.moduleId, updatedAt: new Date() }
             : lesson
         )
         
-        onLessonsUpdate(updatedLessons)
+        // Recalculate order for all lessons in affected modules
+        const affectedModules = new Set([activeLesson.moduleId, overLesson.moduleId])
+        affectedModules.forEach(moduleId => {
+          const moduleLessons = updatedLessons.filter(l => l.moduleId === moduleId)
+          moduleLessons.forEach((lesson, index) => {
+            const lessonIndex = updatedLessons.findIndex(l => l.id === lesson.id)
+            updatedLessons[lessonIndex] = { ...updatedLessons[lessonIndex], order: index }
+          })
+        })
+        
+        onLessonsUpdate(updatedLessons, true) // Structural change
       }
       // Check if dropped over a module (empty area)
       else {
@@ -389,11 +401,21 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
         
         if (overModule && activeLesson.moduleId !== overModule.id) {
           // Move lesson to the end of the target module
-          onLessonsUpdate(lessons.map(lesson =>
+          const targetModuleLessons = lessons.filter(l => l.moduleId === overModule.id)
+          const updatedLessons = lessons.map(lesson =>
             lesson.id === activeLesson.id
-              ? { ...lesson, moduleId: overModule.id }
+              ? { ...lesson, moduleId: overModule.id, order: targetModuleLessons.length, updatedAt: new Date() }
               : lesson
-          ))
+          )
+          
+          // Recalculate order for source module
+          const sourceModuleLessons = updatedLessons.filter(l => l.moduleId === activeLesson.moduleId)
+          sourceModuleLessons.forEach((lesson, index) => {
+            const lessonIndex = updatedLessons.findIndex(l => l.id === lesson.id)
+            updatedLessons[lessonIndex] = { ...updatedLessons[lessonIndex], order: index }
+          })
+          
+          onLessonsUpdate(updatedLessons, true) // Structural change
         }
       }
     }
@@ -405,9 +427,10 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
     const newModule = {
       id: `module-${Date.now()}`,
       name: 'New Module',
-      collapsed: false
+      collapsed: false,
+      order: modules.length
     }
-    onModulesUpdate([...modules, newModule])
+    onModulesUpdate([...modules, newModule], true) // Structural change
   }
 
   const startEditingModule = (moduleId) => {
@@ -420,16 +443,17 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
     if (editingModule) {
       onModulesUpdate(modules.map(module =>
         module.id === editingModule ? { ...module, name: editingModuleName } : module
-      ))
+      ), false) // Content change, not structural
       setEditingModule(null)
       setEditingModuleName('')
     }
   }
 
   const toggleModuleCollapse = (moduleId) => {
+    // Don't trigger save for UI state changes
     onModulesUpdate(modules.map(module =>
       module.id === moduleId ? { ...module, collapsed: !module.collapsed } : module
-    ))
+    ), false)
   }
 
   const deleteModule = (moduleId) => {
@@ -439,37 +463,41 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
         lesson.moduleId === moduleId ? { ...lesson, moduleId: firstModuleId } : lesson
       )
 
-      onModulesUpdate(modules.filter(m => m.id !== moduleId))
-      onLessonsUpdate(updatedLessons)
+      onModulesUpdate(modules.filter(m => m.id !== moduleId), true) // Structural change
+      onLessonsUpdate(updatedLessons, true) // Structural change
     }
   }
 
   const addLesson = (moduleId) => {
+    const moduleLessons = lessons.filter(l => l.moduleId === moduleId)
     const newLesson = {
       id: `lesson-${Date.now()}`,
       title: 'New Lesson',
       prelearningMaterials: '',
       guidedInstructions: '',
       handsOnActivities: '',
-      moduleId
+      moduleId,
+      order: moduleLessons.length,
+      createdAt: new Date(),
+      updatedAt: new Date()
     }
-    onLessonsUpdate([...lessons, newLesson])
+    onLessonsUpdate([...lessons, newLesson], true) // Structural change
   }
 
   const updateLesson = (lessonId, updates) => {
     onLessonsUpdate(lessons.map(lesson =>
       lesson.id === lessonId ? { ...lesson, ...updates } : lesson
-    ))
+    ), false) // Content change
   }
 
   const updateLessonField = (lessonId, field, value) => {
     onLessonsUpdate(lessons.map(lesson =>
       lesson.id === lessonId ? { ...lesson, [field]: value } : lesson
-    ))
+    ), false) // Content change
   }
 
   const deleteLesson = (lessonId) => {
-    onLessonsUpdate(lessons.filter(lesson => lesson.id !== lessonId))
+    onLessonsUpdate(lessons.filter(lesson => lesson.id !== lessonId), true) // Structural change
   }
 
   const moveLesson = (lessonId, targetModuleId) => {
