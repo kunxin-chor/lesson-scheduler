@@ -1,52 +1,57 @@
-import { useState, useEffect, useRef } from 'react'
-import { Container, Row, Col, Card, Button, Form, Badge } from 'react-bootstrap'
+import { useReducer, useEffect, useRef, useCallback } from 'react'
+import { Container, Row, Col, Card, Button, Form, Badge, Alert, Spinner } from 'react-bootstrap'
 import LessonBoard from '../LessonBoard'
+import { lessonPlanReducer, initialState, LESSON_PLAN_ACTIONS } from '../reducers/lessonPlanReducer'
+import { lessonPlanService } from '../services/lessonPlanService'
+import { transformFromBackend, transformToBackend } from '../utils/lessonPlanTransform'
 
 function LessonPlansPage() {
-  const [lessonPlans, setLessonPlans] = useState([])
-  const [selectedPlan, setSelectedPlan] = useState(null)
-  const [modules, setModules] = useState([])
-  const [lessons, setLessons] = useState([])
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [saveStatus, setSaveStatus] = useState('saved') // 'saved', 'saving', 'unsaved'
-  const [lastSaved, setLastSaved] = useState(null)
+  const [state, dispatch] = useReducer(lessonPlanReducer, initialState)
   const debounceTimerRef = useRef(null)
+  
+  const { lessonPlans, selectedPlan, modules, lessons, showCreateForm, saveStatus, lastSaved, loading, error } = state
 
-  const performSave = () => {
+  const performSave = useCallback(async () => {
     if (!selectedPlan) return
 
-    setSaveStatus('saving')
-    const updatedPlan = {
-      ...selectedPlan,
-      modules,
-      lessons,
-      updatedAt: new Date()
+    dispatch({ type: LESSON_PLAN_ACTIONS.SET_SAVE_STATUS, payload: 'saving' })
+    
+    try {
+      // Generate database-compatible JSON
+      console.log('📊 Lessons before transform:', lessons.map(l => ({
+        id: l.id,
+        title: l.title,
+        prelearning: l.prelearningMaterials?.substring(0, 50) || 'EMPTY',
+        guided: l.guidedInstructions?.substring(0, 50) || 'EMPTY',
+        handsOn: l.handsOnActivities?.substring(0, 50) || 'EMPTY'
+      })))
+      
+      const dbJSON = transformToBackend(selectedPlan, modules, lessons)
+      
+      console.log('=== LESSON PLAN JSON FOR DATABASE ===')
+      console.log(JSON.stringify(dbJSON, null, 2))
+      console.log('=====================================')
+      
+      // Update in backend
+      await lessonPlanService.update(selectedPlan.id, dbJSON)
+      
+      dispatch({ type: LESSON_PLAN_ACTIONS.UPDATE_LESSON_PLAN })
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_SAVE_STATUS, payload: 'saved' })
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_LAST_SAVED, payload: new Date() })
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_ERROR, payload: null })
+    } catch (error) {
+      console.error('Failed to save lesson plan:', error)
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_SAVE_STATUS, payload: 'unsaved' })
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_ERROR, payload: 'Failed to save changes' })
     }
-    
-    // Generate database-compatible JSON
-    const dbJSON = generateLessonPlanJSON(selectedPlan, modules, lessons)
-    
-    setLessonPlans(lessonPlans.map(p => 
-      p.id === selectedPlan.id ? updatedPlan : p
-    ))
-    setSelectedPlan(updatedPlan)
-    
-    console.log('=== LESSON PLAN JSON FOR DATABASE ===')
-    console.log(JSON.stringify(dbJSON, null, 2))
-    console.log('=====================================')
-    
-    setSaveStatus('saved')
-    setLastSaved(new Date())
-  }
+  }, [selectedPlan, modules, lessons])
 
   const debouncedSave = () => {
-    setSaveStatus('unsaved')
+    dispatch({ type: LESSON_PLAN_ACTIONS.SET_SAVE_STATUS, payload: 'unsaved' })
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)
     }
-    debounceTimerRef.current = setTimeout(() => {
-      performSave()
-    }, 2000) // 2 second debounce
+    debounceTimerRef.current = setTimeout(performSave, 2000) // 2 second debounce
   }
 
   const immediateSave = () => {
@@ -57,26 +62,55 @@ function LessonPlansPage() {
   }
 
   const handleLessonsUpdate = (updatedLessons, isStructuralChange = false) => {
-    setLessons(updatedLessons)
-    if (selectedPlan) {
-      if (isStructuralChange) {
-        immediateSave()
-      } else {
-        debouncedSave()
-      }
-    }
+    dispatch({ type: LESSON_PLAN_ACTIONS.UPDATE_LESSONS, payload: updatedLessons })
+    dispatch({ type: LESSON_PLAN_ACTIONS.SET_SAVE_STATUS, payload: 'unsaved' })
   }
 
   const handleModulesUpdate = (updatedModules, isStructuralChange = false) => {
-    setModules(updatedModules)
-    if (selectedPlan) {
-      if (isStructuralChange) {
-        immediateSave()
-      } else {
-        debouncedSave()
+    dispatch({ type: LESSON_PLAN_ACTIONS.UPDATE_MODULES, payload: updatedModules })
+    dispatch({ type: LESSON_PLAN_ACTIONS.SET_SAVE_STATUS, payload: 'unsaved' })
+  }
+
+  // Auto-save when lessons or modules change
+  useEffect(() => {
+    if (!selectedPlan || saveStatus === 'saved' || saveStatus === 'saving') return
+    
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+    
+    // Set new timer
+    debounceTimerRef.current = setTimeout(() => {
+      performSave()
+    }, 2000)
+    
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
       }
     }
-  }
+  }, [lessons, modules, selectedPlan, saveStatus, performSave])
+
+  // Fetch lesson plans on mount
+  useEffect(() => {
+    const fetchLessonPlans = async () => {
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_LOADING, payload: true })
+      try {
+        const plans = await lessonPlanService.getAll()
+        const transformedPlans = plans.map(transformFromBackend)
+        dispatch({ type: LESSON_PLAN_ACTIONS.SET_LESSON_PLANS, payload: transformedPlans })
+        dispatch({ type: LESSON_PLAN_ACTIONS.SET_ERROR, payload: null })
+      } catch (error) {
+        console.error('Failed to fetch lesson plans:', error)
+        dispatch({ type: LESSON_PLAN_ACTIONS.SET_ERROR, payload: 'Failed to load lesson plans' })
+      } finally {
+        dispatch({ type: LESSON_PLAN_ACTIONS.SET_LOADING, payload: false })
+      }
+    }
+    
+    fetchLessonPlans()
+  }, [])
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
@@ -87,85 +121,89 @@ function LessonPlansPage() {
     }
   }, [])
 
-  const handleCreatePlan = (e) => {
+  const handleCreatePlan = async (e) => {
     e.preventDefault()
     const formData = new FormData(e.target)
-    const newPlan = {
-      id: `plan-${Date.now()}`,
+    
+    const newPlanData = {
       name: formData.get('name'),
       description: formData.get('description'),
       modules: [],
-      lessons: [],
-      createdAt: new Date(),
-      updatedAt: new Date()
     }
     
-    setLessonPlans([...lessonPlans, newPlan])
-    setShowCreateForm(false)
-    e.target.reset()
-    console.log('New lesson plan created:', newPlan)
+    dispatch({ type: LESSON_PLAN_ACTIONS.SET_LOADING, payload: true })
+    try {
+      const createdPlan = await lessonPlanService.create(newPlanData)
+      const transformedPlan = transformFromBackend(createdPlan)
+      
+      dispatch({
+        type: LESSON_PLAN_ACTIONS.SET_LESSON_PLANS,
+        payload: [...lessonPlans, transformedPlan]
+      })
+      dispatch({ type: LESSON_PLAN_ACTIONS.TOGGLE_CREATE_FORM, payload: false })
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_ERROR, payload: null })
+      
+      e.target.reset()
+      console.log('New lesson plan created:', transformedPlan)
+    } catch (error) {
+      console.error('Failed to create lesson plan:', error)
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_ERROR, payload: 'Failed to create lesson plan' })
+    } finally {
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_LOADING, payload: false })
+    }
   }
 
   const handleSelectPlan = (plan) => {
-    setSelectedPlan(plan)
-    setModules(plan.modules || [])
-    setLessons(plan.lessons || [])
+    dispatch({ type: LESSON_PLAN_ACTIONS.SELECT_LESSON_PLAN, payload: plan })
   }
 
   const handleBackToList = () => {
-    setSelectedPlan(null)
-    setModules([])
-    setLessons([])
-  }
-
-  const generateLessonPlanJSON = (plan, modulesData, lessonsData) => {
-    // Transform flat lessons array into nested structure within modules
-    const modulesWithLessons = modulesData.map((module, moduleIndex) => ({
-      id: module.id,
-      name: module.name,
-      order: moduleIndex, // Use array position for order
-      lessons: lessonsData
-        .filter(lesson => lesson.moduleId === module.id)
-        .map((lesson, lessonIndex) => ({
-          id: lesson.id,
-          title: lesson.title,
-          prelearningMaterials: lesson.prelearningMaterials || '',
-          guidedInstructions: lesson.guidedInstructions || '',
-          handsOnActivities: lesson.handsOnActivities || '',
-          order: lessonIndex, // Use array position for order
-          createdAt: lesson.createdAt || new Date(),
-          updatedAt: new Date()
-        }))
-    }))
-
-    return {
-      name: plan.name,
-      description: plan.description || '',
-      modules: modulesWithLessons,
-      createdAt: plan.createdAt || new Date(),
-      updatedAt: new Date()
-    }
+    dispatch({ type: LESSON_PLAN_ACTIONS.DESELECT_LESSON_PLAN })
   }
 
 
-  const handleDuplicatePlan = (plan) => {
-    const duplicatedPlan = {
-      ...plan,
-      id: `plan-${Date.now()}`,
+  const handleDuplicatePlan = async (plan) => {
+    const duplicateData = {
       name: `${plan.name} (Copy)`,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      description: plan.description,
+      modules: plan.modules || [],
     }
-    setLessonPlans([...lessonPlans, duplicatedPlan])
-    console.log('Plan duplicated:', duplicatedPlan)
+    
+    dispatch({ type: LESSON_PLAN_ACTIONS.SET_LOADING, payload: true })
+    try {
+      const createdPlan = await lessonPlanService.create(duplicateData)
+      const transformedPlan = transformFromBackend(createdPlan)
+      
+      dispatch({
+        type: LESSON_PLAN_ACTIONS.SET_LESSON_PLANS,
+        payload: [...lessonPlans, transformedPlan]
+      })
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_ERROR, payload: null })
+      console.log('Plan duplicated:', transformedPlan)
+    } catch (error) {
+      console.error('Failed to duplicate lesson plan:', error)
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_ERROR, payload: 'Failed to duplicate lesson plan' })
+    } finally {
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_LOADING, payload: false })
+    }
   }
 
-  const handleDeletePlan = (planId) => {
-    if (window.confirm('Are you sure you want to delete this lesson plan?')) {
-      setLessonPlans(lessonPlans.filter(p => p.id !== planId))
-      if (selectedPlan?.id === planId) {
-        handleBackToList()
-      }
+  const handleDeletePlan = async (planId) => {
+    if (!window.confirm('Are you sure you want to delete this lesson plan?')) {
+      return
+    }
+    
+    dispatch({ type: LESSON_PLAN_ACTIONS.SET_LOADING, payload: true })
+    try {
+      await lessonPlanService.delete(planId)
+      dispatch({ type: LESSON_PLAN_ACTIONS.DELETE_LESSON_PLAN, payload: planId })
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_ERROR, payload: null })
+      console.log('Plan deleted:', planId)
+    } catch (error) {
+      console.error('Failed to delete lesson plan:', error)
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_ERROR, payload: 'Failed to delete lesson plan' })
+    } finally {
+      dispatch({ type: LESSON_PLAN_ACTIONS.SET_LOADING, payload: false })
     }
   }
 
@@ -262,12 +300,28 @@ function LessonPlansPage() {
           <Button 
             variant="primary" 
             size="sm"
-            onClick={() => setShowCreateForm(true)}
+            onClick={() => dispatch({ type: LESSON_PLAN_ACTIONS.TOGGLE_CREATE_FORM, payload: true })}
+            disabled={loading}
           >
             + New Plan
           </Button>
         </div>
       </div>
+
+      {error && (
+        <Alert variant="danger" dismissible onClose={() => dispatch({ type: LESSON_PLAN_ACTIONS.SET_ERROR, payload: null })}>
+          {error}
+        </Alert>
+      )}
+
+      {loading && !lessonPlans.length && (
+        <div className="text-center py-5">
+          <Spinner animation="border" role="status" variant="primary">
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+          <p className="mt-3" style={{ color: '#5e6c84' }}>Loading lesson plans...</p>
+        </div>
+      )}
 
       {showCreateForm && (
         <div style={{ 
@@ -311,7 +365,7 @@ function LessonPlansPage() {
               <Button 
                 variant="outline-secondary"
                 size="sm"
-                onClick={() => setShowCreateForm(false)}
+                onClick={() => dispatch({ type: LESSON_PLAN_ACTIONS.TOGGLE_CREATE_FORM, payload: false })}
               >
                 Cancel
               </Button>
@@ -340,7 +394,7 @@ function LessonPlansPage() {
             <Button 
               variant="primary"
               size="sm"
-              onClick={() => setShowCreateForm(true)}
+              onClick={() => dispatch({ type: LESSON_PLAN_ACTIONS.TOGGLE_CREATE_FORM, payload: true })}
             >
               Create First Plan
             </Button>
