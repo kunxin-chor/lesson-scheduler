@@ -38,14 +38,18 @@ describe('Lesson Plan API', () => {
     });
 
     it('should return all lesson plans', async () => {
-      await request(app)
+      // Create both lesson plans sequentially
+      const first = await request(app)
         .post('/api/lesson-plans')
-        .send(sampleLessonPlan);
+        .send(sampleLessonPlan)
+        .expect(201);
 
-      await request(app)
+      const second = await request(app)
         .post('/api/lesson-plans')
-        .send({ ...sampleLessonPlan, name: 'Second Plan' });
+        .send({ ...sampleLessonPlan, name: 'Second Plan' })
+        .expect(201);
 
+      // Now retrieve all lesson plans
       const response = await request(app)
         .get('/api/lesson-plans')
         .expect(200);

@@ -24,26 +24,51 @@ export async function getAllLessonPlans() {
 
 export async function getLessonPlanById(id) {
   const db = getDB();
-  return await db.collection(COLLECTION).findOne({ _id: new ObjectId(id) });
+  try {
+    return await db.collection(COLLECTION).findOne({ _id: new ObjectId(id) });
+  } catch (error) {
+    // If ObjectId is invalid, return null (controller will handle as 404)
+    console.log('ObjectId error:', error.message);
+    if (error.message.includes('ObjectId') || error.message.includes('BSON')) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function updateLessonPlan(id, updateData) {
   const db = getDB();
-  const result = await db.collection(COLLECTION).findOneAndUpdate(
-    { _id: new ObjectId(id) },
-    { 
-      $set: { 
-        ...updateData, 
-        updatedAt: new Date() 
-      } 
-    },
-    { returnDocument: 'after' }
-  );
-  return result.value;
+  try {
+    const result = await db.collection(COLLECTION).findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { 
+        $set: { 
+          ...updateData, 
+          updatedAt: new Date() 
+        } 
+      },
+      { returnDocument: 'after' }
+    );
+    return result || null; // Return null if result or result.value is null
+  } catch (error) {
+    // If ObjectId is invalid, return null (controller will handle as 404)
+    if (error.message.includes('ObjectId') || error.message.includes('BSON')) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function deleteLessonPlan(id) {
   const db = getDB();
-  const result = await db.collection(COLLECTION).deleteOne({ _id: new ObjectId(id) });
-  return result.deletedCount > 0;
+  try {
+    const result = await db.collection(COLLECTION).deleteOne({ _id: new ObjectId(id) });
+    return result.deletedCount > 0;
+  } catch (error) {
+    // If ObjectId is invalid, return false (controller will handle as 404)
+    if (error.message.includes('ObjectId')) {
+      return false;
+    }
+    throw error;
+  }
 }

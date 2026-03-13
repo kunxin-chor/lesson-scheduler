@@ -7,6 +7,11 @@ export default defineConfig({
     setupFiles: ['./tests/setup.js'],
     hookTimeout: 30000,
     testTimeout: 10000,
+    poolOptions: {
+      threads: {
+        singleThread: true
+      }
+    },
     reporters: ['verbose', 'json'],
     outputFile: {
       json: './test-results.json'
