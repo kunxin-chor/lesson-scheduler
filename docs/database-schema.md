@@ -45,36 +45,21 @@
 {
   _id: ObjectId,
   name: String (required),
-  lessonPlanId: ObjectId (ref: 'LessonPlans', required),
+  lessonPlanId: ObjectId (ref: 'LessonPlans'), // Optional for now
   startDate: Date (required),
-  timeSlotConfig: {
-    morning: {
-      startTime: String (required), // "10:00" in HH:mm format
-      endTime: String (required)    // "13:00" in HH:mm format
-    },
-    afternoon: {
-      startTime: String (required), // "14:00" in HH:mm format
-      endTime: String (required)    // "17:00" in HH:mm format
-    },
-    evening: {
-      startTime: String (required), // "19:00" in HH:mm format
-      endTime: String (required)    // "22:00" in HH:mm format
-    }
-  },
-  lessonDays: [{
+  classSlotPatterns: [{
     dayOfWeek: Number (required), // 0=Sunday, 6=Saturday
-    timeSlot: String (enum: ['morning', 'afternoon', 'evening'], required)
-  }], // e.g., [{dayOfWeek: 1, timeSlot: 'morning'}, {dayOfWeek: 3, timeSlot: 'afternoon'}]
-  exceptions: {
-    skipDates: [{
-      date: Date,
-      timeSlot: String (enum: ['morning', 'afternoon', 'evening']) // Optional: skip specific time slot, if omitted skips entire day
-    }], // Dates to skip even if they fall on lessonDays
-    addDates: [{
-      date: Date,
-      timeSlot: String (enum: ['morning', 'afternoon', 'evening'], required)
-    }] // Extra lesson dates that don't fall on regular lessonDays
-  },
+    timeSlot: String (enum: ['morning', 'afternoon', 'evening'], required),
+    frequency: Number (required) // 1=every week, 2=every 2 weeks, etc.
+  }], // e.g., [{dayOfWeek: 1, timeSlot: 'morning', frequency: 1}, {dayOfWeek: 3, timeSlot: 'afternoon', frequency: 2}]
+  exceptions: [String], // Array of ISO date strings (YYYY-MM-DD) to skip - includes public holidays
+  classSlots: [{
+    id: String (required),
+    date: Date (required),
+    dayOfWeek: Number (required),
+    timeSlot: String (enum: ['morning', 'afternoon', 'evening'], required),
+    isManuallyAdded: Boolean (default: false)
+  }], // Generated class slots based on patterns and exceptions
   status: String (enum: ['active', 'completed', 'archived'], default: 'active'),
   createdAt: Date (default: Date.now),
   updatedAt: Date (default: Date.now)
@@ -126,17 +111,20 @@
 - **Timestamps**: Both lesson plans and individual lessons track `createdAt` and `updatedAt`
 - **Hierarchy**: LessonPlan → Modules → Lessons (nested structure)
 
-### Intakes and Time Configuration
-- **Intakes** reference a `LessonPlan` and define when/how it's delivered
-- **timeSlotConfig**: Each intake defines its own time ranges for morning/afternoon/evening slots
-  - Allows different intakes to have different class times
-  - Example: One intake's morning could be 9am-12pm, another's 10am-1pm
-- **lessonDays**: Array pairing day of week (0-6) with time slot name
-  - Example: `[{dayOfWeek: 1, timeSlot: 'morning'}, {dayOfWeek: 3, timeSlot: 'afternoon'}]`
-  - Allows different time slots for different days
-- **exceptions**: Flexible skip and add functionality
-  - `skipDates`: Skip specific time slots on specific dates, or entire days if timeSlot omitted
-  - `addDates`: Add extra lesson dates (makeup classes) with their time slots
+### Intakes and Class Slot Configuration
+- **Intakes** reference a `LessonPlan` (optional) and define when/how classes are scheduled
+- **classSlotPatterns**: Array defining recurring class schedule with frequency support
+  - Each pattern specifies: `dayOfWeek` (0-6), `timeSlot` (morning/afternoon/evening), and `frequency`
+  - `frequency: 1` = every week, `frequency: 2` = every 2 weeks, etc.
+  - Example: `[{dayOfWeek: 1, timeSlot: 'morning', frequency: 1}, {dayOfWeek: 3, timeSlot: 'afternoon', frequency: 2}]`
+  - Allows flexible scheduling with alternating week patterns
+- **exceptions**: Array of ISO date strings (YYYY-MM-DD) to skip
+  - Used for public holidays and other skip dates
+  - Admin manually enters these dates when creating/updating intake
+- **classSlots**: Generated array of actual class slots
+  - Automatically generated based on `startDate`, `classSlotPatterns`, and `exceptions`
+  - Each slot has: `id`, `date`, `dayOfWeek`, `timeSlot`, and `isManuallyAdded` flag
+  - Admin can manually add/delete individual slots after generation
 
 ### Scheduled Lessons
 - **ScheduledLessons** are created when an intake is assigned a lesson plan
