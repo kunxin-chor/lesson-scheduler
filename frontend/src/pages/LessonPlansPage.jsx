@@ -1,5 +1,6 @@
 import { useReducer, useEffect, useRef, useCallback } from 'react'
 import { Container, Row, Col, Card, Button, Form, Badge, Alert, Spinner } from 'react-bootstrap'
+import { useLocation, useRoute } from 'wouter'
 import LessonBoard from '../LessonBoard'
 import { lessonPlanReducer, initialState, LESSON_PLAN_ACTIONS } from '../reducers/lessonPlanReducer'
 import { lessonPlanService } from '../services/lessonPlanService'
@@ -8,6 +9,8 @@ import { transformFromBackend, transformToBackend } from '../utils/lessonPlanTra
 function LessonPlansPage() {
   const [state, dispatch] = useReducer(lessonPlanReducer, initialState)
   const debounceTimerRef = useRef(null)
+  const [location, setLocation] = useLocation()
+  const [match, params] = useRoute('/lesson-plans/:planId')
   
   const { lessonPlans, selectedPlan, modules, lessons, showCreateForm, saveStatus, lastSaved, loading, error } = state
 
@@ -112,6 +115,16 @@ function LessonPlansPage() {
     fetchLessonPlans()
   }, [])
 
+  // Select plan from URL parameter when plans are loaded
+  useEffect(() => {
+    if (params?.planId && lessonPlans.length > 0 && !selectedPlan) {
+      const planToSelect = lessonPlans.find(p => p.id === params.planId)
+      if (planToSelect) {
+        dispatch({ type: LESSON_PLAN_ACTIONS.SELECT_LESSON_PLAN, payload: planToSelect })
+      }
+    }
+  }, [params?.planId, lessonPlans, selectedPlan])
+
   // Cleanup debounce timer on unmount
   useEffect(() => {
     return () => {
@@ -155,10 +168,12 @@ function LessonPlansPage() {
 
   const handleSelectPlan = (plan) => {
     dispatch({ type: LESSON_PLAN_ACTIONS.SELECT_LESSON_PLAN, payload: plan })
+    setLocation(`/lesson-plans/${plan.id}`)
   }
 
   const handleBackToList = () => {
     dispatch({ type: LESSON_PLAN_ACTIONS.DESELECT_LESSON_PLAN })
+    setLocation('/lesson-plans')
   }
 
 

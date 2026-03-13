@@ -14,6 +14,7 @@ function App() {
         <main className="app-main">
           <Route path="/" component={HomePage} />
           <Route path="/lesson-plans" component={LessonPlansPage} />
+          <Route path="/lesson-plans/:planId" component={LessonPlansPage} />
           <Route path="/intakes" component={IntakesPage} />
         </main>
       </Router>
