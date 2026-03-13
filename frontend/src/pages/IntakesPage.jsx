@@ -1,28 +1,39 @@
 import { useState } from 'react'
-import { Container, Row, Col, Card, Button, Form, Badge } from 'react-bootstrap'
+import { Container, Row, Col, Card, Button, Badge } from 'react-bootstrap'
+import IntakeFormModal from '../components/IntakeFormModal'
+import ClassSlotManager from '../components/ClassSlotManager'
+import RegenerateCalendarModal from '../components/RegenerateCalendarModal'
+import { generateClassSlots, regenerateClassSlots } from '../utils/classSlotGenerator'
 
 function IntakesPage() {
   const [intakes, setIntakes] = useState([])
   const [lessonPlans, setLessonPlans] = useState([])
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState(null)
+  const [showSlotManager, setShowSlotManager] = useState(false)
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false)
+  const [selectedIntake, setSelectedIntake] = useState(null)
 
-  const handleCreateIntake = (e) => {
-    e.preventDefault()
-    const formData = new FormData(e.target)
+  const handleCreateIntake = (intakeData) => {
+    const classSlots = generateClassSlots(
+      intakeData.startDate,
+      intakeData.classSlotPatterns,
+      intakeData.exceptions
+    )
+
     const newIntake = {
       id: `intake-${Date.now()}`,
-      name: formData.get('name'),
-      lessonPlanId: formData.get('lessonPlanId'),
-      startDate: formData.get('startDate'),
-      lessonDays: formData.getAll('lessonDays'),
-      status: 'active'
+      name: intakeData.name,
+      lessonPlanId: intakeData.lessonPlanId,
+      startDate: intakeData.startDate,
+      classSlotPatterns: intakeData.classSlotPatterns,
+      exceptions: intakeData.exceptions,
+      classSlots: classSlots,
+      status: 'active',
+      createdAt: new Date()
     }
     
     setIntakes([...intakes, newIntake])
     setShowCreateForm(false)
-    e.target.reset()
-    console.log('New intake created:', newIntake)
   }
 
   const handleDeleteIntake = (intakeId) => {
@@ -34,6 +45,42 @@ function IntakesPage() {
   const getLessonPlanName = (planId) => {
     const plan = lessonPlans.find(p => p.id === planId)
     return plan ? plan.name : 'Unknown Plan'
+  }
+
+  const handleManageSlots = (intake) => {
+    setSelectedIntake(intake)
+    setShowSlotManager(true)
+  }
+
+  const handleRegenerateCalendar = (intake) => {
+    setSelectedIntake(intake)
+    setShowRegenerateModal(true)
+  }
+
+  const handleSlotsUpdate = (updatedSlots) => {
+    setIntakes(intakes.map(intake => 
+      intake.id === selectedIntake.id
+        ? { ...intake, classSlots: updatedSlots }
+        : intake
+    ))
+    setShowSlotManager(false)
+  }
+
+  const handleRegenerateSubmit = (updatedConfig) => {
+    const updatedIntake = {
+      ...selectedIntake,
+      classSlotPatterns: updatedConfig.classSlotPatterns,
+      exceptions: updatedConfig.exceptions
+    }
+
+    const newClassSlots = regenerateClassSlots(updatedIntake)
+
+    setIntakes(intakes.map(intake => 
+      intake.id === selectedIntake.id
+        ? { ...updatedIntake, classSlots: newClassSlots }
+        : intake
+    ))
+    setShowRegenerateModal(false)
   }
 
   return (
@@ -57,81 +104,30 @@ function IntakesPage() {
         </Col>
       </Row>
 
-      {showCreateForm && (
-        <Row className="mb-4">
-          <Col lg={8} className="mx-auto">
-            <Card>
-              <Card.Header as="h5">Create New Intake</Card.Header>
-              <Card.Body>
-                <Form onSubmit={handleCreateIntake}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Intake Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="name"
-                      placeholder="e.g., January 2024 Intake"
-                      required
-                    />
-                  </Form.Group>
+      <IntakeFormModal
+        show={showCreateForm}
+        onHide={() => setShowCreateForm(false)}
+        onSubmit={handleCreateIntake}
+        lessonPlans={lessonPlans}
+      />
 
-                  <Form.Group className="mb-3">
-                    <Form.Label>Lesson Plan</Form.Label>
-                    <Form.Select name="lessonPlanId" required>
-                      <option value="">Select a lesson plan</option>
-                      {lessonPlans.map(plan => (
-                        <option key={plan.id} value={plan.id}>
-                          {plan.name}
-                        </option>
-                      ))}
-                    </Form.Select>
-                    {lessonPlans.length === 0 && (
-                      <Form.Text className="text-warning">
-                        No lesson plans available. Create a lesson plan first.
-                      </Form.Text>
-                    )}
-                  </Form.Group>
+      {selectedIntake && (
+        <>
+          <ClassSlotManager
+            show={showSlotManager}
+            onHide={() => setShowSlotManager(false)}
+            intake={selectedIntake}
+            classSlots={selectedIntake.classSlots}
+            onSlotsUpdate={handleSlotsUpdate}
+          />
 
-                  <Form.Group className="mb-3">
-                    <Form.Label>Start Date</Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="startDate"
-                      required
-                    />
-                  </Form.Group>
-
-                  <Form.Group className="mb-3">
-                    <Form.Label>Lesson Days</Form.Label>
-                    <div>
-                      {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map(day => (
-                        <Form.Check
-                          key={day}
-                          type="checkbox"
-                          name="lessonDays"
-                          value={day}
-                          label={day}
-                          inline
-                        />
-                      ))}
-                    </div>
-                  </Form.Group>
-
-                  <div className="d-flex gap-2">
-                    <Button type="submit" variant="primary">
-                      Create Intake
-                    </Button>
-                    <Button 
-                      variant="secondary" 
-                      onClick={() => setShowCreateForm(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </Form>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
+          <RegenerateCalendarModal
+            show={showRegenerateModal}
+            onHide={() => setShowRegenerateModal(false)}
+            intake={selectedIntake}
+            onRegenerate={handleRegenerateSubmit}
+          />
+        </>
       )}
 
       <Row>
@@ -172,13 +168,23 @@ function IntakesPage() {
                 <Card.Body>
                   <p><strong>Lesson Plan:</strong> {getLessonPlanName(intake.lessonPlanId)}</p>
                   <p><strong>Start Date:</strong> {new Date(intake.startDate).toLocaleDateString()}</p>
-                  <p><strong>Lesson Days:</strong> {intake.lessonDays.join(', ')}</p>
-                  <div className="d-flex gap-2">
-                    <Button variant="outline-primary" size="sm">
-                      📅 View Schedule
+                  <p><strong>Class Slots:</strong> {intake.classSlots?.length || 0} slots generated</p>
+                  <p><strong>Patterns:</strong> {intake.classSlotPatterns?.length || 0} configured</p>
+                  <p><strong>Exceptions:</strong> {intake.exceptions?.length || 0} dates</p>
+                  <div className="d-flex gap-2 flex-wrap">
+                    <Button 
+                      variant="outline-primary" 
+                      size="sm"
+                      onClick={() => handleManageSlots(intake)}
+                    >
+                      📅 Manage Slots
                     </Button>
-                    <Button variant="outline-secondary" size="sm">
-                      ⚙️ Manage
+                    <Button 
+                      variant="outline-warning" 
+                      size="sm"
+                      onClick={() => handleRegenerateCalendar(intake)}
+                    >
+                      🔄 Regenerate Calendar
                     </Button>
                   </div>
                 </Card.Body>
