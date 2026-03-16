@@ -2,6 +2,8 @@
 export function transformFromBackend(backendPlan) {
   if (!backendPlan) return null;
 
+  console.log('🔍 transformFromBackend - Raw backend plan:', backendPlan);
+
   // Flatten modules and lessons for the board view
   const modules = backendPlan.modules || [];
   const lessons = [];
@@ -9,6 +11,14 @@ export function transformFromBackend(backendPlan) {
   modules.forEach((module) => {
     if (module.lessons && Array.isArray(module.lessons)) {
       module.lessons.forEach((lesson) => {
+        console.log('🔍 Processing lesson:', {
+          title: lesson.title,
+          hasPrelearning: !!lesson.prelearningMaterials,
+          hasInstructions: !!lesson.guidedInstructions,
+          hasActivities: !!lesson.handsOnActivities,
+          prelearningLength: lesson.prelearningMaterials?.length,
+          lesson: lesson
+        });
         lessons.push({
           ...lesson,
           moduleId: module.id,
@@ -18,7 +28,7 @@ export function transformFromBackend(backendPlan) {
   });
 
   return {
-    id: backendPlan._id,
+    id: backendPlan.id,
     name: backendPlan.name,
     description: backendPlan.description || '',
     modules: modules.map(m => ({

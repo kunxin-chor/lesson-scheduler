@@ -18,6 +18,18 @@ describe('Lesson Plan API', () => {
       expect(response.body.modules).toHaveLength(1);
     });
 
+    it('should convert module and lesson IDs to strings', async () => {
+      const response = await request(app)
+        .post('/api/lesson-plans')
+        .send(sampleLessonPlan)
+        .expect(201);
+
+      expect(response.body.modules[0].id).toBeDefined();
+      expect(typeof response.body.modules[0].id).toBe('string');
+      expect(response.body.modules[0].lessons[0].id).toBeDefined();
+      expect(typeof response.body.modules[0].lessons[0].id).toBe('string');
+    });
+
     it('should return 500 if name is missing', async () => {
       const invalidPlan = { description: 'No name' };
       
@@ -102,6 +114,41 @@ describe('Lesson Plan API', () => {
 
       expect(response.body.name).toBe(updatedData.name);
       expect(response.body.description).toBe(updatedData.description);
+    });
+
+    it('should update modules and preserve ObjectId format', async () => {
+      const createResponse = await request(app)
+        .post('/api/lesson-plans')
+        .send(sampleLessonPlan);
+
+      const id = createResponse.body.id;
+      const updatedModules = [
+        {
+          id: createResponse.body.modules[0].id,
+          name: 'Updated Module',
+          order: 0,
+          lessons: [
+            {
+              id: createResponse.body.modules[0].lessons[0].id,
+              title: 'Updated Lesson',
+              prelearningMaterials: 'Updated pre-learning',
+              guidedInstructions: 'Updated instructions',
+              handsOnActivities: 'Updated activities',
+              order: 0
+            }
+          ]
+        }
+      ];
+
+      const response = await request(app)
+        .put(`/api/lesson-plans/${id}`)
+        .send({ modules: updatedModules })
+        .expect(200);
+
+      expect(response.body.modules[0].name).toBe('Updated Module');
+      expect(response.body.modules[0].lessons[0].title).toBe('Updated Lesson');
+      expect(typeof response.body.modules[0].id).toBe('string');
+      expect(typeof response.body.modules[0].lessons[0].id).toBe('string');
     });
 
     it('should return 404 when updating non-existent lesson plan', async () => {

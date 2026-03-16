@@ -8,12 +8,9 @@ import { intakeReducer, initialState, INTAKE_ACTIONS } from '../reducers/intakeR
 import { intakeService } from '../services/intakeService'
 import { lessonPlanService } from '../services/lessonPlanService'
 import { transformFromBackend } from '../utils/lessonPlanTransform'
-
 function IntakesPage() {
   const [state, dispatch] = useReducer(intakeReducer, initialState)
-  
   const { intakes, lessonPlans, selectedIntake, showCreateForm, showSlotManager, showRegenerateModal, loading, error } = state
-
   // Fetch intakes and lesson plans on mount
   useEffect(() => {
     const fetchData = async () => {
@@ -23,10 +20,8 @@ function IntakesPage() {
           intakeService.getAll(),
           lessonPlanService.getAll()
         ])
-        
         console.log('📥 Fetched intakes:', intakesData)
         console.log('📥 First intake structure:', intakesData[0])
-        
         dispatch({ type: INTAKE_ACTIONS.SET_INTAKES, payload: intakesData })
         dispatch({ type: INTAKE_ACTIONS.SET_LESSON_PLANS, payload: plansData.map(transformFromBackend) })
         dispatch({ type: INTAKE_ACTIONS.SET_ERROR, payload: null })
@@ -37,11 +32,12 @@ function IntakesPage() {
         dispatch({ type: INTAKE_ACTIONS.SET_LOADING, payload: false })
       }
     }
-    
     fetchData()
   }, [])
-
   const handleCreateIntake = async (intakeData) => {
+    console.log('🔍 Creating intake with data:', intakeData)
+    console.log('🔍 numberOfLessons:', intakeData.numberOfLessons)
+    console.log('🔍 generationMethod:', intakeData.generationMethod)
     // Generate class slots based on the selected method
     const classSlots = generateClassSlots(
       intakeData.startDate,
@@ -51,7 +47,7 @@ function IntakesPage() {
       intakeData.numberOfLessons, // numberOfLessons (for 'auto' or 'manual' methods)
       intakeData.endDate // endDate (for 'endDate' method)
     )
-
+    console.log('🔍 Generated slots count:', classSlots.length)
     const newIntakeData = {
       name: intakeData.name,
       lessonPlanId: intakeData.lessonPlanId,
@@ -61,7 +57,6 @@ function IntakesPage() {
       classSlots: classSlots,
       status: 'active',
     }
-    
     dispatch({ type: INTAKE_ACTIONS.SET_LOADING, payload: true })
     try {
       const createdIntake = await intakeService.create(newIntakeData)
@@ -77,10 +72,8 @@ function IntakesPage() {
       dispatch({ type: INTAKE_ACTIONS.SET_LOADING, payload: false })
     }
   }
-
   const handleDeleteIntake = async (intakeId) => {
     if (!window.confirm('Are you sure you want to delete this intake?')) return
-    
     dispatch({ type: INTAKE_ACTIONS.SET_LOADING, payload: true })
     try {
       await intakeService.delete(intakeId)
@@ -93,12 +86,10 @@ function IntakesPage() {
       dispatch({ type: INTAKE_ACTIONS.SET_LOADING, payload: false })
     }
   }
-
   const getLessonPlanName = (planId) => {
     const plan = lessonPlans.find(p => p.id === planId)
     return plan ? plan.name : 'Unknown Plan'
   }
-
   const handleManageSlots = (intake) => {
     console.log('🎯 handleManageSlots - intake:', intake)
     console.log('🎯 handleManageSlots - intake.id:', intake?.id)
@@ -106,17 +97,14 @@ function IntakesPage() {
     dispatch({ type: INTAKE_ACTIONS.SELECT_INTAKE, payload: intake })
     dispatch({ type: INTAKE_ACTIONS.TOGGLE_SLOT_MANAGER, payload: true })
   }
-
   const handleRegenerateCalendar = (intake) => {
     dispatch({ type: INTAKE_ACTIONS.SELECT_INTAKE, payload: intake })
     dispatch({ type: INTAKE_ACTIONS.TOGGLE_REGENERATE_MODAL, payload: true })
   }
-
   const handleSlotsUpdate = async (updatedSlots) => {
     console.log('🔍 selectedIntake:', selectedIntake)
     console.log('🔍 selectedIntake.id:', selectedIntake?.id)
     console.log('🔍 selectedIntake._id:', selectedIntake?._id)
-    
     dispatch({ type: INTAKE_ACTIONS.SET_LOADING, payload: true })
     try {
       const updatedIntake = await intakeService.updateClassSlots(selectedIntake.id, updatedSlots)
@@ -130,11 +118,44 @@ function IntakesPage() {
       dispatch({ type: INTAKE_ACTIONS.SET_LOADING, payload: false })
     }
   }
-
   const handleRegenerateSubmit = async (updatedConfig) => {
     dispatch({ type: INTAKE_ACTIONS.SET_LOADING, payload: true })
     try {
-      const regeneratedIntake = await intakeService.regenerate(selectedIntake.id, updatedConfig)
+      console.log('🔄 Regenerating with config:', updatedConfig)
+      console.log('🔄 Selected intake:', selectedIntake)
+      
+      // Calculate numberOfLessons from lesson plan
+      let numberOfLessons = null
+      if (selectedIntake.lessonPlanId) {
+        const lessonPlan = lessonPlans.find(p => p.id === selectedIntake.lessonPlanId)
+        console.log('🔄 Found lesson plan:', lessonPlan)
+        if (lessonPlan?.lessons) {
+          numberOfLessons = lessonPlan.lessons.length
+          console.log('🔄 Lessons from plan:', numberOfLessons)
+        }
+      }
+      
+      // Fallback to original slot count
+      if (!numberOfLessons && selectedIntake.classSlots?.length) {
+        numberOfLessons = selectedIntake.classSlots.length
+        console.log('🔄 Using original slot count:', numberOfLessons)
+      }
+      
+      // Generate class slots using the SAME function as create intake
+      const classSlots = generateClassSlots(
+        selectedIntake.startDate,
+        updatedConfig.classSlotPatterns,
+        updatedConfig.exceptions,
+        52, // numberOfWeeks (default)
+        numberOfLessons, // Use calculated lesson count
+        null // endDate (null = use weeks)
+      )
+      console.log('🔄 Generated slots count:', classSlots.length)
+      // Send the generated slots along with patterns and exceptions
+      const regeneratedIntake = await intakeService.regenerate(selectedIntake.id, {
+        ...updatedConfig,
+        classSlots
+      })
       dispatch({ type: INTAKE_ACTIONS.UPDATE_INTAKE, payload: regeneratedIntake })
       dispatch({ type: INTAKE_ACTIONS.TOGGLE_REGENERATE_MODAL, payload: false })
       dispatch({ type: INTAKE_ACTIONS.SET_ERROR, payload: null })
@@ -145,7 +166,6 @@ function IntakesPage() {
       dispatch({ type: INTAKE_ACTIONS.SET_LOADING, payload: false })
     }
   }
-
   return (
     <Container className="py-4">
       <Row className="mb-4">
@@ -166,20 +186,17 @@ function IntakesPage() {
           </div>
         </Col>
       </Row>
-
       {error && (
         <Alert variant="danger" dismissible onClose={() => dispatch({ type: INTAKE_ACTIONS.SET_ERROR, payload: null })}>
           {error}
         </Alert>
       )}
-
       <IntakeFormModal
         show={showCreateForm}
         onHide={() => dispatch({ type: INTAKE_ACTIONS.TOGGLE_CREATE_FORM, payload: false })}
         onSubmit={handleCreateIntake}
         lessonPlans={lessonPlans}
       />
-
       {selectedIntake && (
         <>
           <ClassSlotManager
@@ -189,7 +206,6 @@ function IntakesPage() {
             classSlots={selectedIntake.classSlots}
             onSlotsUpdate={handleSlotsUpdate}
           />
-
           <RegenerateCalendarModal
             show={showRegenerateModal}
             onHide={() => dispatch({ type: INTAKE_ACTIONS.TOGGLE_REGENERATE_MODAL, payload: false })}
@@ -198,7 +214,6 @@ function IntakesPage() {
           />
         </>
       )}
-
       {loading && !intakes.length && (
         <div className="text-center py-5">
           <Spinner animation="border" role="status" variant="primary">
@@ -207,7 +222,6 @@ function IntakesPage() {
           <p className="mt-3" style={{ color: '#5e6c84' }}>Loading intakes...</p>
         </div>
       )}
-
       <Row>
         {!loading && intakes.length === 0 ? (
           <Col>
@@ -274,5 +288,4 @@ function IntakesPage() {
     </Container>
   )
 }
-
 export default IntakesPage

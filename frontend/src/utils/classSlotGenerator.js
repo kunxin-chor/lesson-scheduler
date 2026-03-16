@@ -1,7 +1,25 @@
 export function generateClassSlots(startDate, classSlotPatterns, exceptions, numberOfWeeks = 52, numberOfLessons = null, endDate = null) {
+  console.log('🎯 generateClassSlots called with:', {
+    startDate,
+    classSlotPatterns,
+    exceptions,
+    numberOfWeeks,
+    numberOfLessons,
+    endDate
+  })
+  
   const slots = []
   const startDateObj = new Date(startDate)
-  const exceptionDates = new Set(exceptions.map(d => new Date(d).toDateString()))
+  
+  // Convert exceptions to date strings, handling ISO dates properly to avoid timezone issues
+  const exceptionDates = new Set(exceptions.map(d => {
+    // Parse ISO date string (YYYY-MM-DD) directly without timezone conversion
+    const [year, month, day] = d.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    return date.toDateString()
+  }))
+  
+  console.log('🎯 Exception dates converted:', Array.from(exceptionDates))
   
   // Determine the end date based on parameters
   let finalEndDate
@@ -12,16 +30,36 @@ export function generateClassSlots(startDate, classSlotPatterns, exceptions, num
     finalEndDate.setDate(finalEndDate.getDate() + (numberOfWeeks * 7))
   }
   
+  console.log('🎯 Generation config:', {
+    finalEndDate,
+    numberOfLessons,
+    willStopAtLessonCount: !!numberOfLessons
+  })
+  
   let currentDate = new Date(startDateObj)
   
-  while (currentDate <= finalEndDate && (!numberOfLessons || slots.length < numberOfLessons)) {
+  while (currentDate <= finalEndDate) {
+    // Stop if we've reached the numberOfLessons limit
+    if (numberOfLessons && slots.length >= numberOfLessons) {
+      break
+    }
+    
     const dayOfWeek = currentDate.getDay()
     const dateString = currentDate.toDateString()
+    
+    if (exceptionDates.has(dateString)) {
+      console.log('🚫 Skipping exception date:', dateString)
+    }
     
     if (!exceptionDates.has(dateString)) {
       const matchingPatterns = classSlotPatterns.filter(p => p.dayOfWeek === dayOfWeek)
       
       for (const pattern of matchingPatterns) {
+        // Check limit before adding each slot
+        if (numberOfLessons && slots.length >= numberOfLessons) {
+          break
+        }
+        
         const frequency = pattern.frequency || 1
         
         if (frequency === 1) {

@@ -4,7 +4,22 @@ import * as lessonPlanService from '../services/lessonPlanService.js';
 function transformLessonPlan(plan) {
   if (!plan) return null;
   const { _id, ...rest } = plan;
-  return { id: _id.toString(), ...rest };
+  
+  // Transform modules and lessons to convert ObjectId to string
+  const transformedModules = rest.modules?.map(module => ({
+    ...module,
+    id: module.id?.toString() || module.id,
+    lessons: module.lessons?.map(lesson => ({
+      ...lesson,
+      id: lesson.id?.toString() || lesson.id
+    }))
+  }));
+  
+  return { 
+    id: _id.toString(), 
+    ...rest,
+    modules: transformedModules
+  };
 }
 
 function transformLessonPlans(plans) {

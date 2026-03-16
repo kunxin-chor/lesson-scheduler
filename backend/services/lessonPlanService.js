@@ -1,4 +1,38 @@
+import { ObjectId } from 'mongodb';
 import * as lessonPlanData from '../data/lessonPlanData.js';
+
+// Helper to convert module and lesson IDs to ObjectId
+function convertIdsToObjectId(modules) {
+  if (!modules) return [];
+  
+  return modules.map(module => {
+    let moduleId;
+    try {
+      // Try to use existing ID if it's a valid ObjectId string
+      moduleId = module.id && ObjectId.isValid(module.id) ? new ObjectId(module.id) : new ObjectId();
+    } catch (e) {
+      // Generate new ObjectId if conversion fails
+      moduleId = new ObjectId();
+    }
+    
+    return {
+      ...module,
+      id: moduleId,
+      lessons: module.lessons?.map(lesson => {
+        let lessonId;
+        try {
+          lessonId = lesson.id && ObjectId.isValid(lesson.id) ? new ObjectId(lesson.id) : new ObjectId();
+        } catch (e) {
+          lessonId = new ObjectId();
+        }
+        return {
+          ...lesson,
+          id: lessonId
+        };
+      }) || []
+    };
+  });
+}
 
 export async function createLessonPlan(lessonPlanInfo) {
   if (!lessonPlanInfo.name) {
@@ -8,7 +42,7 @@ export async function createLessonPlan(lessonPlanInfo) {
   const lessonPlan = {
     name: lessonPlanInfo.name,
     description: lessonPlanInfo.description || '',
-    modules: lessonPlanInfo.modules || []
+    modules: convertIdsToObjectId(lessonPlanInfo.modules)
   };
   
   return await lessonPlanData.createLessonPlan(lessonPlan);
@@ -27,7 +61,7 @@ export async function updateLessonPlan(id, updateInfo) {
   
   if (updateInfo.name) updateData.name = updateInfo.name;
   if (updateInfo.description !== undefined) updateData.description = updateInfo.description;
-  if (updateInfo.modules) updateData.modules = updateInfo.modules;
+  if (updateInfo.modules) updateData.modules = convertIdsToObjectId(updateInfo.modules);
   
   return await lessonPlanData.updateLessonPlan(id, updateData);
 }

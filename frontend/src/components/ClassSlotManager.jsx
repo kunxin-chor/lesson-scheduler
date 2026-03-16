@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Modal, Button, Form, Table, Badge, Row, Col, ButtonGroup } from 'react-bootstrap'
 import { addManualSlot, deleteSlot } from '../utils/classSlotGenerator'
 import ClassSlotCalendarView from './ClassSlotCalendarView'
@@ -9,6 +9,11 @@ function ClassSlotManager({ show, onHide, intake, classSlots, onSlotsUpdate }) {
   const [newSlotTimeSlot, setNewSlotTimeSlot] = useState('morning')
   const [filterTimeSlot, setFilterTimeSlot] = useState('all')
   const [viewMode, setViewMode] = useState('list')
+
+  // Update local slots state when classSlots prop changes (e.g., after regeneration)
+  useEffect(() => {
+    setSlots(classSlots || [])
+  }, [classSlots])
 
   const timeSlots = ['morning', 'afternoon', 'evening']
 

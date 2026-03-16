@@ -1,8 +1,8 @@
 {
   "_id": {
-    "$oid": "69b3e04ad59b3bc550cc4917"
+    "$oid": "69b7e479e04f5bd3f7c9603e"
   },
-  "name": "Rocket Bootcamp",
+  "name": "Rocket Bootcamp 2",
   "description": "",
   "modules": [
     {

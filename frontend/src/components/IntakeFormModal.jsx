@@ -95,17 +95,22 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
 
   const handleLessonPlanChange = (e) => {
     const planId = e.target.value
+    console.log('📋 Lesson plan changed to:', planId)
     setSelectedLessonPlanId(planId)
     
-    // Auto-populate numberOfLessons only if generation method is 'auto'
-    if (planId && generationMethod === 'auto') {
+    // When a lesson plan is selected, switch to 'auto' method and calculate lessons
+    if (planId) {
+      setGenerationMethod('auto')
       const selectedPlan = lessonPlans.find(p => p.id === planId)
-      if (selectedPlan && selectedPlan.modules) {
-        const totalLessons = selectedPlan.modules.reduce((total, module) => {
-          return total + (module.lessons ? module.lessons.length : 0)
-        }, 0)
+      console.log('📋 Selected plan:', selectedPlan)
+      if (selectedPlan && selectedPlan.lessons) {
+        const totalLessons = selectedPlan.lessons.length
+        console.log('📋 Calculated totalLessons:', totalLessons)
         setNumberOfLessons(totalLessons.toString())
       }
+    } else {
+      // If no plan selected, clear numberOfLessons
+      setNumberOfLessons('')
     }
   }
 
@@ -133,6 +138,10 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
     e.preventDefault()
     const formData = new FormData(e.target)
     
+    console.log('📝 Form submit - numberOfLessons state:', numberOfLessons)
+    console.log('📝 Form submit - generationMethod:', generationMethod)
+    console.log('📝 Form submit - selectedLessonPlanId:', selectedLessonPlanId)
+    
     const patternsArray = Object.entries(classSlotPatterns).map(([key, frequency]) => {
       const [dayOfWeek, timeSlot] = key.split('-')
       return {
@@ -152,6 +161,8 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
       numberOfLessons: (generationMethod === 'auto' || generationMethod === 'manual') && numberOfLessons ? parseInt(numberOfLessons) : null,
       endDate: generationMethod === 'endDate' ? endDate : null
     }
+    
+    console.log('📝 Final intakeData.numberOfLessons:', intakeData.numberOfLessons)
     
     onSubmit(intakeData)
     resetForm()
