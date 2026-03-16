@@ -1,0 +1,163 @@
+{
+  "_id": {
+    "$oid": "69b3e04ad59b3bc550cc4917"
+  },
+  "name": "Rocket Bootcamp",
+  "description": "",
+  "modules": [
+    {
+      "id": {
+        "$oid": "69b3e04ad59b3bc550cc4918"
+      },
+      "name": "System Architecture",
+      "order": 0,
+      "lessons": [
+        {
+          "id": {
+            "$oid": "69b3e04ad59b3bc550cc4919"
+          },
+          "title": "Introduction to Programming and Setup",
+          "prelearningMaterials": "* [Video Lecture](https://docs.google.com/presentation/d/1db636ukX_H_FSr1-eVlh674N6z0z7nxY0e1UEovHzjA/edit?usp=classroom_web&authuser=0)\n* [Introduction to Programming Lecture](https://docs.google.com/presentation/d/1db636ukX_H_FSr1-eVlh674N6z0z7nxY0e1UEovHzjA/edit?usp=classroom_web&authuser=0)",
+          "guidedInstructions": "* [Setting up your Development Environment](https://scrawny-dingo-56a.notion.site/0-Setup-254b5d8a79f780afbf3ac9f67f85809b)",
+          "handsOnActivities": "",
+          "order": 0
+        },
+        {
+          "id": {
+            "$oid": "69b3e04ad59b3bc550cc491a"
+          },
+          "title": "Building Blocks of a Program",
+          "prelearningMaterials": "* [Video Lecture](https://drive.google.com/file/d/1Zt7M3KRHMPRxOveMLz68SaSyoc4ZaXm_/view)\n* [Slides](https://docs.google.com/presentation/d/18QrwkOQqzlkhOXcr_TrtLWfy08zfilVtoJ-y2YE4lkk/edit?slide=id.g3475aeb9e55_0_295#slide=id.g3475aeb9e55_0_295)",
+          "guidedInstructions": "* [Building Blocks of a Hands On](https://scrawny-dingo-56a.notion.site/1-Building-Blocks-of-a-Program-1c9b5d8a79f78001a6bce7c446916b69)",
+          "handsOnActivities": "* Do part 1, 2 and 3: [Practice Questions](https://js-coding-tutorials.netlify.app/)",
+          "order": 1
+        },
+        {
+          "id": {
+            "$oid": "69b3e04ad59b3bc550cc491e"
+          },
+          "title": "Input and Data Conversion",
+          "prelearningMaterials": "* [Video Lecture](https://docs.google.com/presentation/d/1OerUbnN_LyX019YL-ujFlN0-61sUtuMko7hWDbvtDeo/edit?usp=classroom_web)",
+          "guidedInstructions": "* [Hands On](https://scrawny-dingo-56a.notion.site/2-Inputs-and-Data-Processing-1c9b5d8a79f7802baca6e9c21510518b)",
+          "handsOnActivities": "* [Practice Questions](https://stackblitz.com/edit/stackblitz-starters-yt99yhrx?file=q1.js)",
+          "order": 2
+        },
+        {
+          "id": {
+            "$oid": "69b3e04ad59b3bc550cc491f"
+          },
+          "title": "Branching",
+          "prelearningMaterials": "* [Video Lecture](https://drive.google.com/file/d/1i6paAlOPvKNXhTYpCbzuL3bOo_R18Svu/view?usp=classroom_web&authuser=0)\n* [Slides](https://docs.google.com/presentation/d/1u-ToSySotE6onU0acfRD9EoxnwwpuQDB1gKUamTihWw/)",
+          "guidedInstructions": "* [Hands On](https://scrawny-dingo-56a.notion.site/3-Branching-1ccb5d8a79f780bdbf69c7553d7429df)",
+          "handsOnActivities": "* [Practice Questions](https://scrawny-dingo-56a.notion.site/Branching-Practice-Questions-1ccb5d8a79f78016918dd312546bc143)",
+          "order": 3
+        },
+        {
+          "id": {
+            "$oid": "69b3e04ad59b3bc550cc4920"
+          },
+          "title": "Reptitions",
+          "prelearningMaterials": "* [Video Lecture](https://drive.google.com/file/d/1SvOqWU7Y7B2VMevLIjB34-OKLQeI5VGS/view?usp=classroom_web&authuser=0)\n* [Slides](https://docs.google.com/presentation/d/1cfv78w7VZQG5lywQ1znFdPfMZnbri7jJd6SU2F6XAns/edit?slide=id.g3475d59ca2d_0_140#slide=id.g3475d59ca2d_0_140)",
+          "guidedInstructions": "* [Hands On](https://scrawny-dingo-56a.notion.site/4-Repetition-1ccb5d8a79f7802d9672e10395a1aa51)",
+          "handsOnActivities": "* [Practice Questions](https://stackblitz.com/edit/stackblitz-starters-dtsarzcw?file=README.md)",
+          "order": 4
+        },
+        {
+            "id": {
+                "$oid": "69b3e04ad59b3bc550cc4922"
+            },
+            "title": "Objects",
+            "prelearningMaterials": "* [JavaScript Object in 7 Minutes](https://www.youtube.com/watch?v=lo7o91qLzxc) * [Recorded Lesson](https://drive.google.com/file/d/1i3JjiKJE4oud3kiHmcsbDN7vq8xBXejP/view?usp=classroom_web&authuser=0)",
+            "guidedInstructions": "* [Hands On](https://scrawny-dingo-56a.notion.site/6-Objects-1ceb5d8a79f7800290e5e26249eb2bad)",
+            "handsOnActivities": "* [Practice Questions](https://stackblitz.com/edit/stackblitz-starters-qnncm1jd?file=README.md)",
+            "order": 5
+        },
+        {
+            "id": {
+                "$oid": "69b3e04ad59b3bc550cc4921"
+            },
+            "title": "Structured Programming with Functions",
+            "prelearningMaterials": "* [Video Lecture](https://www.youtube.com/watch?v=TmtyFcLWXwo)",
+            "guidedInstructions": "* [Hands On](https://scrawny-dingo-56a.notion.site/7-Structured-Programming-1d0b5d8a79f780fe8d65d5238b3069e9)",
+            "handsOnActivities": "* [Practice Questions](https://scrawny-dingo-56a.notion.site/9-Challenges-1d0b5d8a79f780bbac38f355687328fc)",
+            "order": 6
+        }
+      ]
+    },
+    {
+      "id": {
+        "$oid": "69b3e04ad59b3bc550cc491b"
+      },
+      "name": "User Experience",
+      "order": 1,
+      "lessons": [
+        {
+          "id": {
+            "$oid": "69b3e04ad59b3bc550cc491c"
+          },
+          "title": "How Does the Internet Works?",
+          "prelearningMaterials": "[How does the Internet Works](https://www.youtube.com/watch?v=7_LPdttKXPc&pp=ygUaaG93IGRvZXMgdGhlIGludGVybmV0IHdvcms%3D)",
+          "guidedInstructions": "* [Environment Setup](https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.5sf9nypidxb9#heading=h.7qzectcu1kwz)",
+          "handsOnActivities": "",
+          "order": 0
+        },
+        {
+          "id": {
+            "$oid": "69b3e04ad59b3bc550cc491d"
+          },
+          "title": "Nested Elements",
+          "prelearningMaterials": "* [Nested Elements (Video)](https://www.youtube.com/watch?v=rO6_MZLIzCg&authuser=0)\n* [HTML Tables](https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Structuring_content/HTML_table_basics?authuser=0)",
+          "guidedInstructions": "* [Guided Instructions](https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.w40dlvmpccym#heading=h.5uj74emybv10) ",
+          "handsOnActivities": "* [Cake Website Hands On](https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.w40dlvmpccym#heading=h.clrrsbpgtvwc)",
+          "order": 1
+        },
+        {
+            "id":{
+                "$oid": "69b3e04ad59b3bc550cc491e"
+            },
+            "title": "Basic CSS and the Box Model",
+            "prelearningMaterials": "* [Intro to CSS (Article)](https://www.theodinproject.com/lessons/foundations-intro-to-css?authuser=0) *[Slides](https://docs.google.com/presentation/d/1P3zjpYWyKg4T31Tep02o07Wti7hQ_OR9ZCOr6A_MykU/)",
+            "guidedInstructions": "* [Basic CSS Guided Instructions](https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.y94gb6thsjj#heading=h.bl6lckwly6hb) * [Box Model Guided Instructions](https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.duqhdrpvvh91#heading=h.abk9u9yj9g70)",
+            "handsOnActivities": "* [Basic CSS and Box Model Hands On](https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.y94gb6thsjj#heading=h.64tb41y48jiy) * [Box Model Hands On](https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.duqhdrpvvh91#heading=h.nhtj6h8eqaj7)",
+            "order": 2
+        },
+        {
+            "id": {
+                "$oid": "69b3e04ad59b3bc550cc491f"
+            },
+            "title": "Positioning, Flexbox and Mobile Responsiveness",
+            "prelearningMaterials": "* [Slides](https://docs.google.com/presentation/d/1yHJXVnGqB9LBiNFOASMP-rMrKJzAYdiTc_5n3oWFUYo/edit?usp=classroom_web&authuser=0) *[Positioning (Odin Project])(https://www.theodinproject.com/lessons/node-path-intermediate-html-and-css-positioning) *[Flex Box (Odin Project)](https://www.theodinproject.com/lessons/foundations-introduction-to-flexbox)",
+            "guidedInstructions": "* [Positioning Guided Instructions](https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.ypaydtx1inn#heading=h.lsm8wp6zay70) * [Flexbox Gudided Instructions](https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.1wbqo6uh9bup#heading=h.gvgp7k4zwne) * [Mobile Responsiveness Guided Instructions](https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.h436at9aqn15#heading=h.6h0sw3ka15sc)",
+            "handsOnActivities": "* [Positioning Hands On]https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.ypaydtx1inn#heading=h.5pk8lapxplxj) * [Flexbox Hands On](https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.1wbqo6uh9bup#heading=h.qkvx3sqoknj1) [Mobile Responsiveness Hands On](HANDS ON 7.1)",
+            "order": 3
+        },
+        {
+            "id":{
+                "$oid": "69b3e04ad59b3bc550cc4920"
+            },
+            "title": "Semantic HTML and Bootstrap",
+            "prelearningMaterials": "# Semantic HTML * [Semantic HTML (Odin Project)[https://www.theodinproject.com/lessons/node-path-advanced-html-and-css-semantic-html?authuser=0] * [Semantic HTML Slides](https://docs.google.com/presentation/d/1DQvrHNUZJR_7-0FGAQOVGmPcvG6COa8MOLHLPA0p-vs/edit?usp=classroom_web&authuser=0) # Bootstrap * [Bootstrap Tutorial](https://www.tutorialrepublic.com/twitter-bootstrap-tutorial/?authuser=0)",
+            "guidedInstructions": "* [Semantic HTML Guided Instructions](https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.o98sqyh7rxfe#heading=h.ts8voh8c5f5i) * [Bootstrap Gudided Instructions](https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.k709eg4m8lgs#heading=h.ytz28ulxcm5m)",
+            "handsOnActivities": "",
+            "order": 4
+        },
+        {
+            "id":{
+                "$oid": "69b3e04ad59b3bc550cc4921"
+            },
+            "title": "Mobile Responsive Bootstrap",
+            "prelearningMaterials": "",
+            "guidedInstructions": "* [Mobile Responsiveness with Bootstrap](https://docs.google.com/document/d/1Fndx569o8xATwdiWw7VyfU70asJcjsDeHxQhZAjYg-Y/edit?tab=t.59ebkcbi2pii#heading=h.3bksgusd6a4l)",
+            "handsOnActivities": "",
+            "order": 5
+        }
+      ]
+    }
+  ],
+  "createdAt": {
+    "$date": "2026-03-13T10:00:42.604Z"
+  },
+  "updatedAt": {
+    "$date": "2026-03-13T11:09:42.455Z"
+  }
+}
