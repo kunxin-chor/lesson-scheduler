@@ -14,7 +14,8 @@ export async function createLessonPlan(lessonPlanData) {
     createdAt: new Date(),
     updatedAt: new Date()
   });
-  return { _id: result.insertedId, ...lessonPlanData };
+  const createdPlan = await db.collection(COLLECTION).findOne({ _id: result.insertedId });
+  return createdPlan;
 }
 
 export async function getAllLessonPlans() {

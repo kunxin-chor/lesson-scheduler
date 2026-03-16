@@ -6,6 +6,10 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
   const [exceptions, setExceptions] = useState([])
   const [exceptionInput, setExceptionInput] = useState('')
   const [selectedDate, setSelectedDate] = useState('')
+  const [numberOfLessons, setNumberOfLessons] = useState('')
+  const [selectedLessonPlanId, setSelectedLessonPlanId] = useState('')
+  const [generationMethod, setGenerationMethod] = useState('auto') // 'auto', 'manual', 'endDate'
+  const [endDate, setEndDate] = useState('')
 
   const daysOfWeek = [
     { value: 0, label: 'Sunday' },
@@ -89,6 +93,42 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
     setExceptions(exceptions.filter((_, i) => i !== index))
   }
 
+  const handleLessonPlanChange = (e) => {
+    const planId = e.target.value
+    setSelectedLessonPlanId(planId)
+    
+    // Auto-populate numberOfLessons only if generation method is 'auto'
+    if (planId && generationMethod === 'auto') {
+      const selectedPlan = lessonPlans.find(p => p.id === planId)
+      if (selectedPlan && selectedPlan.modules) {
+        const totalLessons = selectedPlan.modules.reduce((total, module) => {
+          return total + (module.lessons ? module.lessons.length : 0)
+        }, 0)
+        setNumberOfLessons(totalLessons.toString())
+      }
+    }
+  }
+
+  const handleGenerationMethodChange = (method) => {
+    setGenerationMethod(method)
+    
+    // Auto-populate if switching to 'auto' and a plan is selected
+    if (method === 'auto' && selectedLessonPlanId) {
+      const selectedPlan = lessonPlans.find(p => p.id === selectedLessonPlanId)
+      if (selectedPlan && selectedPlan.modules) {
+        const totalLessons = selectedPlan.modules.reduce((total, module) => {
+          return total + (module.lessons ? module.lessons.length : 0)
+        }, 0)
+        setNumberOfLessons(totalLessons.toString())
+      }
+    } else if (method === 'manual') {
+      setNumberOfLessons('')
+    } else if (method === 'endDate') {
+      setNumberOfLessons('')
+      setEndDate('')
+    }
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     const formData = new FormData(e.target)
@@ -107,7 +147,10 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
       lessonPlanId: formData.get('lessonPlanId'),
       startDate: formData.get('startDate'),
       classSlotPatterns: patternsArray,
-      exceptions
+      exceptions,
+      generationMethod,
+      numberOfLessons: (generationMethod === 'auto' || generationMethod === 'manual') && numberOfLessons ? parseInt(numberOfLessons) : null,
+      endDate: generationMethod === 'endDate' ? endDate : null
     }
     
     onSubmit(intakeData)
@@ -119,6 +162,10 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
     setExceptions([])
     setExceptionInput('')
     setSelectedDate('')
+    setNumberOfLessons('')
+    setSelectedLessonPlanId('')
+    setGenerationMethod('auto')
+    setEndDate('')
   }
 
   const handleClose = () => {
@@ -153,7 +200,11 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
 
           <Form.Group className="mb-3">
             <Form.Label>Lesson Plan (Optional)</Form.Label>
-            <Form.Select name="lessonPlanId">
+            <Form.Select 
+              name="lessonPlanId"
+              value={selectedLessonPlanId}
+              onChange={handleLessonPlanChange}
+            >
               <option value="">Select a lesson plan (optional)</option>
               {lessonPlans.map(plan => (
                 <option key={plan.id} value={plan.id}>
@@ -162,6 +213,93 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
               ))}
             </Form.Select>
           </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label className="fw-bold">Class Slot Generation Method</Form.Label>
+            <div className="mb-2">
+              <Form.Check
+                type="radio"
+                id="method-auto"
+                label="Auto from Lesson Plan"
+                checked={generationMethod === 'auto'}
+                onChange={() => handleGenerationMethodChange('auto')}
+                disabled={!selectedLessonPlanId}
+              />
+              <Form.Text className="text-muted d-block ms-4 mb-2">
+                Generate slots based on the number of lessons in the selected lesson plan
+              </Form.Text>
+              
+              <Form.Check
+                type="radio"
+                id="method-manual"
+                label="Manual Number of Lessons"
+                checked={generationMethod === 'manual'}
+                onChange={() => handleGenerationMethodChange('manual')}
+              />
+              <Form.Text className="text-muted d-block ms-4 mb-2">
+                Specify exactly how many class slots to generate
+              </Form.Text>
+              
+              <Form.Check
+                type="radio"
+                id="method-endDate"
+                label="Set End Date"
+                checked={generationMethod === 'endDate'}
+                onChange={() => handleGenerationMethodChange('endDate')}
+              />
+              <Form.Text className="text-muted d-block ms-4">
+                Generate slots until a specific end date
+              </Form.Text>
+            </div>
+          </Form.Group>
+
+          {generationMethod === 'auto' && (
+            <Form.Group className="mb-3">
+              <Form.Label>Number of Lessons (Auto-populated)</Form.Label>
+              <Form.Control
+                type="number"
+                min="1"
+                value={numberOfLessons}
+                readOnly
+                disabled
+                placeholder="Select a lesson plan above"
+              />
+              <Form.Text className="text-muted">
+                {selectedLessonPlanId && numberOfLessons
+                  ? `${numberOfLessons} lessons from selected lesson plan`
+                  : 'Please select a lesson plan to auto-populate'}
+              </Form.Text>
+            </Form.Group>
+          )}
+
+          {generationMethod === 'manual' && (
+            <Form.Group className="mb-3">
+              <Form.Label>Number of Lessons</Form.Label>
+              <Form.Control
+                type="number"
+                min="1"
+                value={numberOfLessons}
+                onChange={(e) => setNumberOfLessons(e.target.value)}
+                placeholder="Enter number of class slots to generate"
+                required
+              />
+            </Form.Group>
+          )}
+
+          {generationMethod === 'endDate' && (
+            <Form.Group className="mb-3">
+              <Form.Label>End Date</Form.Label>
+              <Form.Control
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                required
+              />
+              <Form.Text className="text-muted">
+                Class slots will be generated from start date until this end date
+              </Form.Text>
+            </Form.Group>
+          )}
 
           <Form.Group className="mb-3">
             <Form.Label>Start Date</Form.Label>

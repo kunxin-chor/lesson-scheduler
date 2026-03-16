@@ -1,9 +1,20 @@
 import * as intakeService from '../services/intakeService.js';
 
+// Transform MongoDB _id to id for frontend
+function transformIntake(intake) {
+  if (!intake) return null;
+  const { _id, ...rest } = intake;
+  return { id: _id.toString(), ...rest };
+}
+
+function transformIntakes(intakes) {
+  return intakes.map(transformIntake);
+}
+
 export async function createIntake(req, res) {
   try {
     const intake = await intakeService.createIntake(req.body);
-    res.status(201).json(intake);
+    res.status(201).json(transformIntake(intake));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -12,7 +23,7 @@ export async function createIntake(req, res) {
 export async function getAllIntakes(req, res) {
   try {
     const intakes = await intakeService.getAllIntakes();
-    res.json(intakes);
+    res.json(transformIntakes(intakes));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -24,7 +35,7 @@ export async function getIntakeById(req, res) {
     if (!intake) {
       return res.status(404).json({ error: 'Intake not found' });
     }
-    res.json(intake);
+    res.json(transformIntake(intake));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -36,7 +47,7 @@ export async function updateIntake(req, res) {
     if (!intake) {
       return res.status(404).json({ error: 'Intake not found' });
     }
-    res.json(intake);
+    res.json(transformIntake(intake));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -60,7 +71,7 @@ export async function updateClassSlots(req, res) {
     if (!intake) {
       return res.status(404).json({ error: 'Intake not found' });
     }
-    res.json(intake);
+    res.json(transformIntake(intake));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -78,7 +89,7 @@ export async function regenerateIntake(req, res) {
     if (!intake) {
       return res.status(404).json({ error: 'Intake not found' });
     }
-    res.json(intake);
+    res.json(transformIntake(intake));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

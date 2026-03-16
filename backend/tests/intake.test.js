@@ -12,7 +12,7 @@ describe('Intake API', () => {
         .send(sampleIntake)
         .expect(201);
 
-      expect(response.body).toHaveProperty('_id');
+      expect(response.body).toHaveProperty('id');
       expect(response.body.name).toBe(sampleIntake.name);
       expect(response.body.classSlotPatterns).toHaveLength(2);
       expect(response.body.exceptions).toHaveLength(2);
@@ -26,7 +26,7 @@ describe('Intake API', () => {
 
       const intakeWithPlan = {
         ...sampleIntake,
-        lessonPlanId: planResponse.body._id
+        lessonPlanId: planResponse.body.id
       };
 
       const response = await request(app)
@@ -34,7 +34,7 @@ describe('Intake API', () => {
         .send(intakeWithPlan)
         .expect(201);
 
-      expect(response.body.lessonPlanId).toBe(planResponse.body._id);
+      expect(response.body.lessonPlanId).toBe(planResponse.body.id);
     });
 
     it('should handle intake without lesson plan (optional)', async () => {
@@ -46,7 +46,7 @@ describe('Intake API', () => {
         .send(intakeWithoutPlan)
         .expect(201);
 
-      expect(response.body).toHaveProperty('_id');
+      expect(response.body).toHaveProperty('id');
     });
   });
 
@@ -70,8 +70,8 @@ describe('Intake API', () => {
         .send({ ...sampleIntake, name: 'Second Intake' })
         .expect(201);
 
-      expect(first.body).toHaveProperty('_id');
-      expect(second.body).toHaveProperty('_id');
+      expect(first.body).toHaveProperty('id');
+      expect(second.body).toHaveProperty('id');
 
       const response = await request(app)
         .get('/api/intakes')
@@ -87,13 +87,13 @@ describe('Intake API', () => {
         .post('/api/intakes')
         .send(sampleIntake);
 
-      const id = createResponse.body._id;
+      const id = createResponse.body.id;
 
       const response = await request(app)
         .get(`/api/intakes/${id}`)
         .expect(200);
 
-      expect(response.body._id).toBe(id);
+      expect(response.body.id).toBe(id);
       expect(response.body.name).toBe(sampleIntake.name);
     });
 
@@ -112,7 +112,7 @@ describe('Intake API', () => {
         .post('/api/intakes')
         .send(sampleIntake);
 
-      const id = createResponse.body._id;
+      const id = createResponse.body.id;
       const updatedData = {
         name: 'Updated Intake',
         status: 'completed'
@@ -143,7 +143,7 @@ describe('Intake API', () => {
         .post('/api/intakes')
         .send(sampleIntake);
 
-      const id = createResponse.body._id;
+      const id = createResponse.body.id;
 
       await request(app)
         .delete(`/api/intakes/${id}`)
@@ -169,7 +169,7 @@ describe('Intake API', () => {
         .post('/api/intakes')
         .send(sampleIntake);
 
-      const id = createResponse.body._id;
+      const id = createResponse.body.id;
       const newClassSlots = [
         {
           id: 'slot-1',
@@ -204,7 +204,7 @@ describe('Intake API', () => {
         .post('/api/intakes')
         .send(sampleIntake);
 
-      const id = createResponse.body._id;
+      const id = createResponse.body.id;
       const newConfig = {
         classSlotPatterns: [
           { dayOfWeek: 2, timeSlot: 'evening', frequency: 1 }

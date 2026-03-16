@@ -12,7 +12,7 @@ describe('Lesson Plan API', () => {
         .send(sampleLessonPlan)
         .expect(201);
 
-      expect(response.body).toHaveProperty('_id');
+      expect(response.body).toHaveProperty('id');
       expect(response.body.name).toBe(sampleLessonPlan.name);
       expect(response.body.description).toBe(sampleLessonPlan.description);
       expect(response.body.modules).toHaveLength(1);
@@ -64,13 +64,13 @@ describe('Lesson Plan API', () => {
         .post('/api/lesson-plans')
         .send(sampleLessonPlan);
 
-      const id = createResponse.body._id;
+      const id = createResponse.body.id;
 
       const response = await request(app)
         .get(`/api/lesson-plans/${id}`)
         .expect(200);
 
-      expect(response.body._id).toBe(id);
+      expect(response.body.id).toBe(id);
       expect(response.body.name).toBe(sampleLessonPlan.name);
     });
 
@@ -89,7 +89,7 @@ describe('Lesson Plan API', () => {
         .post('/api/lesson-plans')
         .send(sampleLessonPlan);
 
-      const id = createResponse.body._id;
+      const id = createResponse.body.id;
       const updatedData = {
         name: 'Updated Lesson Plan',
         description: 'Updated description'
@@ -120,7 +120,7 @@ describe('Lesson Plan API', () => {
         .post('/api/lesson-plans')
         .send(sampleLessonPlan);
 
-      const id = createResponse.body._id;
+      const id = createResponse.body.id;
 
       await request(app)
         .delete(`/api/lesson-plans/${id}`)

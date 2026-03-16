@@ -1,14 +1,20 @@
-export function generateClassSlots(startDate, classSlotPatterns, exceptions, numberOfWeeks = 52) {
+export function generateClassSlots(startDate, classSlotPatterns, exceptions, numberOfWeeks = 52, numberOfLessons = null, endDate = null) {
   const slots = []
   const startDateObj = new Date(startDate)
   const exceptionDates = new Set(exceptions.map(d => new Date(d).toDateString()))
   
-  const endDate = new Date(startDateObj)
-  endDate.setDate(endDate.getDate() + (numberOfWeeks * 7))
+  // Determine the end date based on parameters
+  let finalEndDate
+  if (endDate) {
+    finalEndDate = new Date(endDate)
+  } else {
+    finalEndDate = new Date(startDateObj)
+    finalEndDate.setDate(finalEndDate.getDate() + (numberOfWeeks * 7))
+  }
   
   let currentDate = new Date(startDateObj)
   
-  while (currentDate <= endDate) {
+  while (currentDate <= finalEndDate && (!numberOfLessons || slots.length < numberOfLessons)) {
     const dayOfWeek = currentDate.getDay()
     const dateString = currentDate.toDateString()
     

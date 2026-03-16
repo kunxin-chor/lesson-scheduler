@@ -10,7 +10,8 @@ export async function createIntake(intakeData) {
     createdAt: new Date(),
     updatedAt: new Date()
   });
-  return { _id: result.insertedId, ...intakeData };
+  const createdIntake = await db.collection(COLLECTION).findOne({ _id: result.insertedId });
+  return createdIntake;
 }
 
 export async function getAllIntakes() {
