@@ -27,6 +27,7 @@ export const sampleLessonPlan = {
       id: 'module-1',
       name: 'Module 1',
       order: 1,
+      referenceMaterials: '',
       lessons: [
         {
           id: 'lesson-1',

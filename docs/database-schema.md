@@ -24,6 +24,7 @@
     id: String (required), // e.g., 'module-1234567890'
     name: String (required),
     order: Number (required), // For ordering modules
+    referenceMaterials: String, // Markdown content for module reference materials
     lessons: [{
       id: String (required), // e.g., 'lesson-1234567890'
       title: String (required),

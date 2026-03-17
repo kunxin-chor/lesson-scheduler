@@ -18,6 +18,7 @@ function convertIdsToObjectId(modules) {
     return {
       ...module,
       id: moduleId,
+      referenceMaterials: module.referenceMaterials || '',
       lessons: module.lessons?.map(lesson => {
         let lessonId;
         try {

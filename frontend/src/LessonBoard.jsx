@@ -21,6 +21,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import LessonEditModal from './components/LessonEditModal'
+import ModuleEditModal from './components/ModuleEditModal'
 import './LessonBoard.css'
 
 function SortableModule({ module, children, editable }) {
@@ -248,6 +249,8 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingModule, setEditingModule] = useState(null)
   const [editingModuleName, setEditingModuleName] = useState('')
+  const [editingModuleRef, setEditingModuleRef] = useState(null)
+  const [showModuleRefModal, setShowModuleRefModal] = useState(false)
   const [activeId, setActiveId] = useState(null)
 
   const handleEditLesson = (lesson) => {
@@ -365,7 +368,8 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
       id: `module-${Date.now()}`,
       name: 'New Module',
       collapsed: false,
-      order: modules.length
+      order: modules.length,
+      referenceMaterials: ''
     }
     onModulesUpdate([...modules, newModule], true) // Structural change
   }
@@ -384,6 +388,24 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
       setEditingModule(null)
       setEditingModuleName('')
     }
+  }
+
+  const handleEditModuleRef = (module) => {
+    setEditingModuleRef(module)
+    setShowModuleRefModal(true)
+  }
+
+  const handleSaveModuleRef = (updates) => {
+    if (editingModuleRef) {
+      onModulesUpdate(modules.map(module =>
+        module.id === editingModuleRef.id ? { ...module, ...updates } : module
+      ), false) // Content change, not structural
+    }
+  }
+
+  const handleCloseModuleRefModal = () => {
+    setShowModuleRefModal(false)
+    setEditingModuleRef(null)
   }
 
   const toggleModuleCollapse = (moduleId) => {
@@ -495,6 +517,17 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
                         </Badge>
                       </div>
                       <div className="module-actions">
+                        {editable && (
+                          <Button
+                            variant="link"
+                            size="sm"
+                            onClick={() => handleEditModuleRef(module)}
+                            title="Edit reference materials"
+                            style={{ padding: '0.25rem 0.5rem' }}
+                          >
+                            📚
+                          </Button>
+                        )}
                         <Button
                           variant="link"
                           size="sm"
@@ -518,35 +551,56 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
                     </div>
 
                     {!module.collapsed && (
-                      <div className="lessons-container">
-                        <SortableContext
-                          items={getLessonsByModule(module.id).map(l => l.id)}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          {getLessonsByModule(module.id).map((lesson) => (
-                            <SortableLesson
-                              key={lesson.id}
-                              lesson={lesson}
-                              moduleId={module.id}
-                              modules={modules}
-                              onEdit={handleEditLesson}
-                              onDelete={deleteLesson}
-                              onMove={moveLesson}
-                            />
-                          ))}
-                        </SortableContext>
-
-                        {editable && (
-                          <Button
-                            variant="outline-primary"
-                            size="sm"
-                            className="w-100 mt-2"
-                            onClick={() => addLesson(module.id)}
-                          >
-                            + Add Lesson
-                          </Button>
+                      <>
+                        {module.referenceMaterials && (
+                          <div style={{
+                            background: '#f8f9fa',
+                            padding: '0.75rem',
+                            margin: '0.5rem',
+                            borderRadius: '4px',
+                            fontSize: '0.875rem',
+                            border: '1px solid #e1e4e8'
+                          }}>
+                            <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: '#172b4d' }}>
+                              📚 Reference Materials
+                            </div>
+                            <div className="markdown-content" style={{ color: '#5e6c84' }}>
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {module.referenceMaterials}
+                              </ReactMarkdown>
+                            </div>
+                          </div>
                         )}
-                      </div>
+                        <div className="lessons-container">
+                          <SortableContext
+                            items={getLessonsByModule(module.id).map(l => l.id)}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            {getLessonsByModule(module.id).map((lesson) => (
+                              <SortableLesson
+                                key={lesson.id}
+                                lesson={lesson}
+                                moduleId={module.id}
+                                modules={modules}
+                                onEdit={handleEditLesson}
+                                onDelete={deleteLesson}
+                                onMove={moveLesson}
+                              />
+                            ))}
+                          </SortableContext>
+
+                          {editable && (
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              className="w-100 mt-2"
+                              onClick={() => addLesson(module.id)}
+                            >
+                              + Add Lesson
+                            </Button>
+                          )}
+                        </div>
+                      </>
                     )}
                   </>
                 )}
@@ -575,6 +629,13 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
         lesson={editingLesson}
         onClose={handleCloseModal}
         onSave={handleSaveLesson}
+      />
+
+      <ModuleEditModal
+        show={showModuleRefModal}
+        module={editingModuleRef}
+        onClose={handleCloseModuleRefModal}
+        onSave={handleSaveModuleRef}
       />
 
       {/* Edit Modal Overlay */}

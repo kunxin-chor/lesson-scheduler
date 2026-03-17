@@ -35,6 +35,7 @@ export function transformFromBackend(backendPlan) {
       id: m.id,
       name: m.name,
       order: m.order,
+      referenceMaterials: m.referenceMaterials || '',
     })),
     lessons: lessons,
     createdAt: backendPlan.createdAt,
@@ -49,6 +50,7 @@ export function transformToBackend(plan, modulesData, lessonsData) {
     id: module.id,
     name: module.name,
     order: moduleIndex,
+    referenceMaterials: module.referenceMaterials || '',
     lessons: lessonsData
       .filter(lesson => lesson.moduleId === module.id)
       .map((lesson, lessonIndex) => ({
