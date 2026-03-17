@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import intakeRoutes from '../routes/intakeRoutes.js';
 import lessonPlanRoutes from '../routes/lessonPlanRoutes.js';
+import linkMetadataRoutes from '../routes/linkMetadataRoutes.js';
 
 export function createTestApp() {
   const app = express();
@@ -11,6 +12,7 @@ export function createTestApp() {
   
   app.use('/api/intakes', intakeRoutes);
   app.use('/api/lesson-plans', lessonPlanRoutes);
+  app.use('/api/link-metadata', linkMetadataRoutes);
   
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Server is running' });

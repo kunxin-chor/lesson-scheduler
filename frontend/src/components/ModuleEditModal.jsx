@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import MdEditor from 'react-markdown-editor-lite'
 import 'react-markdown-editor-lite/lib/index.css'
+import SmartLinkButton from './SmartLinkButton'
 
 function ModuleEditModal({ show, module, onClose, onSave }) {
   const [referenceMaterials, setReferenceMaterials] = useState('')
@@ -25,6 +26,10 @@ function ModuleEditModal({ show, module, onClose, onSave }) {
     onClose()
   }
 
+  const handleInsertLink = (linkText) => {
+    setReferenceMaterials(prev => prev + (prev ? '\n' : '') + linkText)
+  }
+
   if (!module) return null
 
   return (
@@ -37,9 +42,12 @@ function ModuleEditModal({ show, module, onClose, onSave }) {
 
       <Modal.Body style={{ minHeight: '400px' }}>
         <Form.Group className="mb-3">
-          <Form.Label style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-            Module Reference Materials
-          </Form.Label>
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <Form.Label style={{ fontSize: '0.875rem', fontWeight: 500, margin: 0 }}>
+              Module Reference Materials
+            </Form.Label>
+            <SmartLinkButton onInsertLink={handleInsertLink} />
+          </div>
           <p style={{ fontSize: '0.75rem', color: '#5e6c84', marginBottom: '1rem' }}>
             Add reference materials, documentation links, or resources for this module. Supports Markdown formatting.
           </p>

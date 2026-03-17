@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Modal, Button, Form, Tabs, Tab } from 'react-bootstrap'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import MdEditor from 'react-markdown-editor-lite'
 import 'react-markdown-editor-lite/lib/index.css'
+import SmartLinkButton from './SmartLinkButton'
 
 function LessonEditModal({ show, lesson, onClose, onSave }) {
   const [title, setTitle] = useState('')
@@ -11,6 +12,9 @@ function LessonEditModal({ show, lesson, onClose, onSave }) {
   const [guidedInstructions, setGuidedInstructions] = useState('')
   const [handsOnActivities, setHandsOnActivities] = useState('')
   const [activeTab, setActiveTab] = useState('prelearning')
+  const prelearningEditorRef = useRef(null)
+  const guidedEditorRef = useRef(null)
+  const handsOnEditorRef = useRef(null)
 
   useEffect(() => {
     if (lesson) {
@@ -33,6 +37,16 @@ function LessonEditModal({ show, lesson, onClose, onSave }) {
 
   const handleClose = () => {
     onClose()
+  }
+
+  const handleInsertLink = (linkText, editorType) => {
+    if (editorType === 'prelearning') {
+      setPrelearningMaterials(prev => prev + (prev ? '\n' : '') + linkText)
+    } else if (editorType === 'guided') {
+      setGuidedInstructions(prev => prev + (prev ? '\n' : '') + linkText)
+    } else if (editorType === 'handson') {
+      setHandsOnActivities(prev => prev + (prev ? '\n' : '') + linkText)
+    }
   }
 
   if (!lesson) return null
@@ -64,10 +78,14 @@ function LessonEditModal({ show, lesson, onClose, onSave }) {
         >
           <Tab eventKey="prelearning" title="📚 Pre-learning">
             <Form.Group className="mb-3">
-              <Form.Label style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                Pre-learning Materials
-              </Form.Label>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <Form.Label style={{ fontSize: '0.875rem', fontWeight: 500, margin: 0 }}>
+                  Pre-learning Materials
+                </Form.Label>
+                <SmartLinkButton onInsertLink={(linkText) => handleInsertLink(linkText, 'prelearning')} />
+              </div>
               <MdEditor
+                ref={prelearningEditorRef}
                 value={prelearningMaterials}
                 style={{ height: '400px' }}
                 renderHTML={(text) => <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>}
@@ -79,10 +97,14 @@ function LessonEditModal({ show, lesson, onClose, onSave }) {
 
           <Tab eventKey="guided" title="👨‍🏫 Guided Instructions">
             <Form.Group className="mb-3">
-              <Form.Label style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                Guided Instructions
-              </Form.Label>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <Form.Label style={{ fontSize: '0.875rem', fontWeight: 500, margin: 0 }}>
+                  Guided Instructions
+                </Form.Label>
+                <SmartLinkButton onInsertLink={(linkText) => handleInsertLink(linkText, 'guided')} />
+              </div>
               <MdEditor
+                ref={guidedEditorRef}
                 value={guidedInstructions}
                 style={{ height: '400px' }}
                 renderHTML={(text) => <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>}
@@ -94,10 +116,14 @@ function LessonEditModal({ show, lesson, onClose, onSave }) {
 
           <Tab eventKey="handson" title="🛠️ Hands-on Activities">
             <Form.Group className="mb-3">
-              <Form.Label style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                Hands-on Activities
-              </Form.Label>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <Form.Label style={{ fontSize: '0.875rem', fontWeight: 500, margin: 0 }}>
+                  Hands-on Activities
+                </Form.Label>
+                <SmartLinkButton onInsertLink={(linkText) => handleInsertLink(linkText, 'handson')} />
+              </div>
               <MdEditor
+                ref={handsOnEditorRef}
                 value={handsOnActivities}
                 style={{ height: '400px' }}
                 renderHTML={(text) => <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>}
