@@ -4,6 +4,8 @@ import { format, parse, startOfWeek, getDay } from 'date-fns'
 import enUS from 'date-fns/locale/en-US'
 import { Modal, Button, Form, Badge } from 'react-bootstrap'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
+import ReactMarkdown from 'react-markdown'
+import ClassSlotDetailModal from './ClassSlotDetailModal'
 
 const locales = {
   'en-US': enUS
@@ -17,9 +19,10 @@ const localizer = dateFnsLocalizer({
   locales,
 })
 
-function ClassSlotCalendarView({ slots, onAddSlot, onDeleteSlot }) {
+function ClassSlotCalendarView({ slots, onAddSlot, onDeleteSlot, intake, lessonPlans }) {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEventModal, setShowEventModal] = useState(false)
+  const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [selectedDate, setSelectedDate] = useState(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('morning')
@@ -56,9 +59,14 @@ function ClassSlotCalendarView({ slots, onAddSlot, onDeleteSlot }) {
       const end = new Date(date)
       end.setHours(endHour, 0, 0)
 
+      const lessonTitle = slot.lesson?.title || 'No Lesson'
+      const title = slot.lesson 
+        ? `${lessonTitle}${slot.isManuallyAdded ? ' (Manual)' : ''}`
+        : `${slot.timeSlot.charAt(0).toUpperCase() + slot.timeSlot.slice(1)}${slot.isManuallyAdded ? ' (Manual)' : ''}`
+      
       return {
         id: slot.id,
-        title: `${slot.timeSlot.charAt(0).toUpperCase() + slot.timeSlot.slice(1)}${slot.isManuallyAdded ? ' (Manual)' : ''}`,
+        title,
         start,
         end,
         resource: slot
@@ -90,6 +98,11 @@ function ClassSlotCalendarView({ slots, onAddSlot, onDeleteSlot }) {
       setShowEventModal(false)
       setSelectedSlot(null)
     }
+  }
+
+  const handleViewDetails = () => {
+    setShowEventModal(false)
+    setShowDetailModal(true)
   }
 
   const eventStyleGetter = (event) => {
@@ -194,7 +207,7 @@ function ClassSlotCalendarView({ slots, onAddSlot, onDeleteSlot }) {
         </Modal.Footer>
       </Modal>
 
-      <Modal show={showEventModal} onHide={() => setShowEventModal(false)}>
+      <Modal show={showEventModal} onHide={() => setShowEventModal(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Class Slot Details</Modal.Title>
         </Modal.Header>
@@ -202,8 +215,62 @@ function ClassSlotCalendarView({ slots, onAddSlot, onDeleteSlot }) {
           {selectedSlot && (
             <>
               <p><strong>Date:</strong> {format(new Date(selectedSlot.date), 'PPP')}</p>
-              <p><strong>Time Slot:</strong> {selectedSlot.timeSlot}</p>
-              <p><strong>Type:</strong> {selectedSlot.isManuallyAdded ? 'Manual' : 'Generated'}</p>
+              <p>
+                <strong>Time Slot:</strong>{' '}
+                <Badge bg={
+                  selectedSlot.timeSlot === 'morning' ? 'info' :
+                  selectedSlot.timeSlot === 'afternoon' ? 'warning' : 'dark'
+                }>
+                  {selectedSlot.timeSlot}
+                </Badge>
+              </p>
+              <p>
+                <strong>Type:</strong>{' '}
+                {selectedSlot.isManuallyAdded ? (
+                  <Badge bg="success">Manual</Badge>
+                ) : (
+                  <Badge bg="secondary">Generated</Badge>
+                )}
+              </p>
+              {selectedSlot.lesson ? (
+                <>
+                  <hr />
+                  <h6>Lesson Details</h6>
+                  {selectedSlot.lesson.moduleName && (
+                    <p><strong>Module:</strong> {selectedSlot.lesson.moduleName}</p>
+                  )}
+                  <p><strong>Title:</strong> {selectedSlot.lesson.title}</p>
+                  
+                  {selectedSlot.lesson.prelearningMaterials && (
+                    <div className="mb-3">
+                      <strong>Pre-learning Materials:</strong>
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <ReactMarkdown>{selectedSlot.lesson.prelearningMaterials}</ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {selectedSlot.lesson.guidedInstructions && (
+                    <div className="mb-3">
+                      <strong>Guided Instructions:</strong>
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <ReactMarkdown>{selectedSlot.lesson.guidedInstructions}</ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {selectedSlot.lesson.handsOnActivities && (
+                    <div className="mb-3">
+                      <strong>Hands-On Activities:</strong>
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <ReactMarkdown>{selectedSlot.lesson.handsOnActivities}</ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-muted">No lesson assigned to this slot.</p>
+              )}
             </>
           )}
         </Modal.Body>
@@ -216,6 +283,12 @@ function ClassSlotCalendarView({ slots, onAddSlot, onDeleteSlot }) {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      <ClassSlotDetailModal
+        show={showDetailModal}
+        onHide={() => setShowDetailModal(false)}
+        slot={selectedSlot}
+      />
     </>
   )
 }

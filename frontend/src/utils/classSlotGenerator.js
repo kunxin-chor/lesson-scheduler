@@ -1,15 +1,37 @@
-export function generateClassSlots(startDate, classSlotPatterns, exceptions, numberOfWeeks = 52, numberOfLessons = null, endDate = null) {
+export function generateClassSlots(startDate, classSlotPatterns, exceptions, numberOfWeeks = 52, numberOfLessons = null, endDate = null, lessonPlan = null) {
   console.log('🎯 generateClassSlots called with:', {
     startDate,
     classSlotPatterns,
     exceptions,
     numberOfWeeks,
     numberOfLessons,
-    endDate
+    endDate,
+    lessonPlan: lessonPlan ? lessonPlan.name : 'none'
   })
   
   const slots = []
   const startDateObj = new Date(startDate)
+  
+  // Flatten all lessons from all modules if lessonPlan is provided
+  let allLessons = []
+  if (lessonPlan) {
+    if (lessonPlan.lessons && Array.isArray(lessonPlan.lessons)) {
+      // Flat lessons array (from backend transformation)
+      allLessons = lessonPlan.lessons
+    } else if (lessonPlan.modules) {
+      // Nested in modules
+      lessonPlan.modules.forEach(module => {
+        if (module.lessons) {
+          allLessons = allLessons.concat(module.lessons.map(lesson => ({
+            ...lesson,
+            moduleName: module.name
+          })))
+        }
+      })
+    }
+    // Sort by order
+    allLessons.sort((a, b) => a.order - b.order)
+  }
   
   // Convert exceptions to date strings, handling ISO dates properly to avoid timezone issues
   const exceptionDates = new Set(exceptions.map(d => {
@@ -62,13 +84,19 @@ export function generateClassSlots(startDate, classSlotPatterns, exceptions, num
         
         const frequency = pattern.frequency || 1
         
+        // Get the lesson for this slot index
+        const lessonIndex = slots.length
+        const lesson = allLessons[lessonIndex] || null
+        
         if (frequency === 1) {
           slots.push({
             id: `slot-${currentDate.getTime()}-${pattern.timeSlot}`,
             date: new Date(currentDate),
             dayOfWeek: dayOfWeek,
             timeSlot: pattern.timeSlot,
-            isManuallyAdded: false
+            isManuallyAdded: false,
+            lessonIndex: lessonIndex,
+            lesson: lesson
           })
         } else if (frequency > 1) {
           const weeksSinceStart = Math.floor((currentDate - startDateObj) / (7 * 24 * 60 * 60 * 1000))
@@ -79,7 +107,9 @@ export function generateClassSlots(startDate, classSlotPatterns, exceptions, num
               date: new Date(currentDate),
               dayOfWeek: dayOfWeek,
               timeSlot: pattern.timeSlot,
-              isManuallyAdded: false
+              isManuallyAdded: false,
+              lessonIndex: lessonIndex,
+              lesson: lesson
             })
           }
         }

@@ -38,6 +38,12 @@ function IntakesPage() {
     console.log('🔍 Creating intake with data:', intakeData)
     console.log('🔍 numberOfLessons:', intakeData.numberOfLessons)
     console.log('🔍 generationMethod:', intakeData.generationMethod)
+    
+    // Get the lesson plan if one is selected
+    const lessonPlan = intakeData.lessonPlanId 
+      ? lessonPlans.find(p => p.id === intakeData.lessonPlanId)
+      : null
+    
     // Generate class slots based on the selected method
     const classSlots = generateClassSlots(
       intakeData.startDate,
@@ -45,7 +51,8 @@ function IntakesPage() {
       intakeData.exceptions,
       52, // numberOfWeeks (used only if no endDate or numberOfLessons)
       intakeData.numberOfLessons, // numberOfLessons (for 'auto' or 'manual' methods)
-      intakeData.endDate // endDate (for 'endDate' method)
+      intakeData.endDate, // endDate (for 'endDate' method)
+      lessonPlan // lesson plan data
     )
     console.log('🔍 Generated slots count:', classSlots.length)
     const newIntakeData = {
@@ -141,6 +148,11 @@ function IntakesPage() {
         console.log('🔄 Using original slot count:', numberOfLessons)
       }
       
+      // Get the lesson plan for regeneration
+      const lessonPlan = selectedIntake.lessonPlanId
+        ? lessonPlans.find(p => p.id === selectedIntake.lessonPlanId)
+        : null
+      
       // Generate class slots using the SAME function as create intake
       const classSlots = generateClassSlots(
         selectedIntake.startDate,
@@ -148,7 +160,8 @@ function IntakesPage() {
         updatedConfig.exceptions,
         52, // numberOfWeeks (default)
         numberOfLessons, // Use calculated lesson count
-        null // endDate (null = use weeks)
+        null, // endDate (null = use weeks)
+        lessonPlan // lesson plan data
       )
       console.log('🔄 Generated slots count:', classSlots.length)
       // Send the generated slots along with patterns and exceptions
@@ -205,6 +218,7 @@ function IntakesPage() {
             intake={selectedIntake}
             classSlots={selectedIntake.classSlots}
             onSlotsUpdate={handleSlotsUpdate}
+            lessonPlans={lessonPlans}
           />
           <RegenerateCalendarModal
             show={showRegenerateModal}
