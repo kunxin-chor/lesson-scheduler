@@ -1,17 +1,65 @@
 import * as XLSX from 'xlsx'
-import { marked } from 'marked'
+
+// Extract links from markdown for creating hyperlinks
+function extractLinks(markdown) {
+  if (!markdown) return []
+  const links = []
+  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g
+  let match
+  while ((match = linkRegex.exec(markdown)) !== null) {
+    links.push({ text: match[1], url: match[2] })
+  }
+  return links
+}
+
+// Convert markdown to plain text with formatting for Excel
+function markdownToPlainText(markdown) {
+  if (!markdown) return ''
+  
+  let text = markdown
+  
+  // Convert headers
+  text = text.replace(/^### (.*$)/gim, '$1')
+  text = text.replace(/^## (.*$)/gim, '$1')
+  text = text.replace(/^# (.*$)/gim, '$1')
+  
+  // Convert bold
+  text = text.replace(/\*\*(.*?)\*\*/g, '$1')
+  text = text.replace(/__(.*?)__/g, '$1')
+  
+  // Convert italic
+  text = text.replace(/\*(.*?)\*/g, '$1')
+  text = text.replace(/_(.*?)_/g, '$1')
+  
+  // Convert links [text](url) to just text (hyperlinks will be added separately)
+  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+  
+  // Convert inline code
+  text = text.replace(/`([^`]+)`/g, '$1')
+  
+  // Convert code blocks - preserve content but remove backticks
+  text = text.replace(/```[\s\S]*?\n([\s\S]*?)```/g, '$1')
+  
+  // Convert unordered lists
+  text = text.replace(/^\s*[-*+]\s+/gim, '• ')
+  
+  // Convert ordered lists
+  text = text.replace(/^\s*\d+\.\s+/gim, (match) => {
+    const num = match.match(/\d+/)[0]
+    return `${num}. `
+  })
+  
+  // Clean up extra whitespace but preserve line breaks
+  text = text.replace(/\n{3,}/g, '\n\n')
+  
+  return text.trim()
+}
 
 export function exportCalendarToExcel(intake, slots) {
   if (!slots || slots.length === 0) {
     alert('No class slots to export')
     return
   }
-
-  // Configure marked to output clean HTML
-  marked.setOptions({
-    breaks: true,
-    gfm: true
-  })
 
   // Group slots by date
   const slotsByDate = {}
@@ -63,16 +111,19 @@ export function exportCalendarToExcel(intake, slots) {
       const timeSlotName = slot.timeSlot.charAt(0).toUpperCase() + slot.timeSlot.slice(1)
       
       if (slot.lesson) {
-        // Convert markdown to HTML
-        const prelearningHTML = slot.lesson.prelearningMaterials 
-          ? marked.parse(slot.lesson.prelearningMaterials)
-          : ''
-        const instructionsHTML = slot.lesson.guidedInstructions
-          ? marked.parse(slot.lesson.guidedInstructions)
-          : ''
-        const handsOnHTML = slot.lesson.handsOnActivities
-          ? marked.parse(slot.lesson.handsOnActivities)
-          : ''
+        // Store both plain text and links for later processing
+        const prelearningData = {
+          text: markdownToPlainText(slot.lesson.prelearningMaterials),
+          links: extractLinks(slot.lesson.prelearningMaterials)
+        }
+        const instructionsData = {
+          text: markdownToPlainText(slot.lesson.guidedInstructions),
+          links: extractLinks(slot.lesson.guidedInstructions)
+        }
+        const handsOnData = {
+          text: markdownToPlainText(slot.lesson.handsOnActivities),
+          links: extractLinks(slot.lesson.handsOnActivities)
+        }
 
         wsData.push([
           formattedDate,
@@ -80,9 +131,9 @@ export function exportCalendarToExcel(intake, slots) {
           timeSlotName,
           slot.lesson.title || '',
           slot.lesson.moduleName || '',
-          prelearningHTML,
-          instructionsHTML,
-          handsOnHTML
+          prelearningData,
+          instructionsData,
+          handsOnData
         ])
       } else {
         wsData.push([
@@ -99,8 +150,17 @@ export function exportCalendarToExcel(intake, slots) {
     })
   })
 
-  // Create worksheet
-  const ws = XLSX.utils.aoa_to_sheet(wsData)
+  // Create worksheet with special handling for data objects
+  const processedData = wsData.map(row => 
+    row.map(cell => {
+      if (cell && typeof cell === 'object' && cell.text !== undefined) {
+        return cell.text
+      }
+      return cell
+    })
+  )
+  
+  const ws = XLSX.utils.aoa_to_sheet(processedData)
 
   // Set column widths
   ws['!cols'] = [
@@ -109,10 +169,33 @@ export function exportCalendarToExcel(intake, slots) {
     { wch: 12 },  // Time Slot
     { wch: 30 },  // Lesson Title
     { wch: 20 },  // Module
-    { wch: 50 },  // Pre-learning
-    { wch: 50 },  // Guided Instructions
-    { wch: 50 }   // Hands-On
+    { wch: 60 },  // Pre-learning
+    { wch: 60 },  // Guided Instructions
+    { wch: 60 }   // Hands-On
   ]
+  
+  // Process cells for hyperlinks and text wrapping
+  const range = XLSX.utils.decode_range(ws['!ref'])
+  for (let R = range.s.r; R <= range.e.r; ++R) {
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
+      if (!ws[cellAddress]) continue
+      
+      // Set text wrapping for all cells
+      if (!ws[cellAddress].s) ws[cellAddress].s = {}
+      ws[cellAddress].s.alignment = { wrapText: true, vertical: 'top' }
+      
+      // Add hyperlinks for content columns (5, 6, 7 = Pre-learning, Instructions, Hands-On)
+      if (R > 0 && C >= 5 && C <= 7) {
+        const dataCell = wsData[R][C]
+        if (dataCell && dataCell.links && dataCell.links.length > 0) {
+          // Add first link as hyperlink (Excel limitation: one hyperlink per cell)
+          const firstLink = dataCell.links[0]
+          ws[cellAddress].l = { Target: firstLink.url, Tooltip: firstLink.text }
+        }
+      }
+    }
+  }
 
   // Create workbook
   const wb = XLSX.utils.book_new()

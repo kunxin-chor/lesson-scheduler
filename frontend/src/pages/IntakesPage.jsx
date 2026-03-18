@@ -52,7 +52,8 @@ function IntakesPage() {
       52, // numberOfWeeks (used only if no endDate or numberOfLessons)
       intakeData.numberOfLessons, // numberOfLessons (for 'auto' or 'manual' methods)
       intakeData.endDate, // endDate (for 'endDate' method)
-      lessonPlan // lesson plan data
+      lessonPlan, // lesson plan data
+      intakeData.dayGapBetweenModules || 0 // day gap between modules
     )
     console.log('🔍 Generated slots count:', classSlots.length)
     const newIntakeData = {
@@ -62,6 +63,7 @@ function IntakesPage() {
       classSlotPatterns: intakeData.classSlotPatterns,
       exceptions: intakeData.exceptions,
       classSlots: classSlots,
+      dayGapBetweenModules: intakeData.dayGapBetweenModules || 0,
       status: 'active',
     }
     dispatch({ type: INTAKE_ACTIONS.SET_LOADING, payload: true })
@@ -161,12 +163,15 @@ function IntakesPage() {
         52, // numberOfWeeks (default)
         numberOfLessons, // Use calculated lesson count
         null, // endDate (null = use weeks)
-        lessonPlan // lesson plan data
+        lessonPlan, // lesson plan data
+        updatedConfig.dayGapBetweenModules || 0 // day gap between modules
       )
       console.log('🔄 Generated slots count:', classSlots.length)
       // Send the generated slots along with patterns and exceptions
       const regeneratedIntake = await intakeService.regenerate(selectedIntake.id, {
-        ...updatedConfig,
+        classSlotPatterns: updatedConfig.classSlotPatterns,
+        exceptions: updatedConfig.exceptions,
+        dayGapBetweenModules: updatedConfig.dayGapBetweenModules,
         classSlots
       })
       dispatch({ type: INTAKE_ACTIONS.UPDATE_INTAKE, payload: regeneratedIntake })

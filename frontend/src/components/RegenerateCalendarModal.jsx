@@ -13,6 +13,7 @@ function RegenerateCalendarModal({ show, onHide, intake, onRegenerate }) {
   const [exceptions, setExceptions] = useState(intake?.exceptions || [])
   const [exceptionInput, setExceptionInput] = useState('')
   const [selectedDate, setSelectedDate] = useState('')
+  const [dayGapBetweenModules, setDayGapBetweenModules] = useState(intake?.dayGapBetweenModules || 0)
 
   const daysOfWeek = [
     { value: 0, label: 'Sunday' },
@@ -108,7 +109,8 @@ function RegenerateCalendarModal({ show, onHide, intake, onRegenerate }) {
     
     onRegenerate({
       classSlotPatterns: patternsArray,
-      exceptions
+      exceptions,
+      dayGapBetweenModules: parseInt(dayGapBetweenModules) || 0
     })
     onHide()
   }
@@ -130,6 +132,22 @@ function RegenerateCalendarModal({ show, onHide, intake, onRegenerate }) {
         <div className="alert alert-warning">
           <strong>Warning:</strong> Regenerating the calendar will replace all existing class slots with new ones based on the updated pattern and exceptions.
         </div>
+
+        {intake?.lessonPlanId && (
+          <Form.Group className="mb-3">
+            <Form.Label>Day Gap Between Modules</Form.Label>
+            <Form.Control
+              type="number"
+              min="0"
+              value={dayGapBetweenModules}
+              onChange={(e) => setDayGapBetweenModules(e.target.value)}
+              placeholder="0"
+            />
+            <Form.Text className="text-muted">
+              Number of days to skip between modules (0 = no gap)
+            </Form.Text>
+          </Form.Group>
+        )}
 
         <Form.Group className="mb-4">
           <Form.Label className="fw-bold">Class Slot Pattern</Form.Label>

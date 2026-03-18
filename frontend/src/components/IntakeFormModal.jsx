@@ -10,9 +10,10 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
   const [selectedLessonPlanId, setSelectedLessonPlanId] = useState('')
   const [generationMethod, setGenerationMethod] = useState('auto') // 'auto', 'manual', 'endDate'
   const [endDate, setEndDate] = useState('')
+  const [dayGapBetweenModules, setDayGapBetweenModules] = useState(0)
 
   const daysOfWeek = [
-        { value: 0, label: 'Sunday' },
+    { value: 0, label: 'Sunday' },
     { value: 1, label: 'Monday' },
     { value: 2, label: 'Tuesday' },
     { value: 3, label: 'Wednesday' },
@@ -159,7 +160,8 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
       exceptions,
       generationMethod,
       numberOfLessons: (generationMethod === 'auto' || generationMethod === 'manual') && numberOfLessons ? parseInt(numberOfLessons) : null,
-      endDate: generationMethod === 'endDate' ? endDate : null
+      endDate: generationMethod === 'endDate' ? endDate : null,
+      dayGapBetweenModules: parseInt(dayGapBetweenModules) || 0
     }
     
     console.log('📝 Final intakeData.numberOfLessons:', intakeData.numberOfLessons)
@@ -177,6 +179,7 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
     setSelectedLessonPlanId('')
     setGenerationMethod('auto')
     setEndDate('')
+    setDayGapBetweenModules(0)
   }
 
   const handleClose = () => {
@@ -224,6 +227,22 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
               ))}
             </Form.Select>
           </Form.Group>
+
+          {selectedLessonPlanId && (
+            <Form.Group className="mb-3">
+              <Form.Label>Day Gap Between Modules</Form.Label>
+              <Form.Control
+                type="number"
+                min="0"
+                value={dayGapBetweenModules}
+                onChange={(e) => setDayGapBetweenModules(e.target.value)}
+                placeholder="0"
+              />
+              <Form.Text className="text-muted">
+                Number of days to skip between modules (0 = no gap)
+              </Form.Text>
+            </Form.Group>
+          )}
 
           <Form.Group className="mb-3">
             <Form.Label className="fw-bold">Class Slot Generation Method</Form.Label>

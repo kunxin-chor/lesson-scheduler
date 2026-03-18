@@ -43,12 +43,55 @@
   background: #0056b3;
 }
 
+.modules-scroll-wrapper {
+  position: relative;
+  width: 100%;
+}
+
 .modules-container {
   display: flex;
   gap: 0.75rem;
   overflow-x: auto;
+  overflow-y: visible;
   padding-bottom: 1rem;
   min-height: 500px;
+  scrollbar-width: thin;
+}
+
+.modules-container::-webkit-scrollbar {
+  height: 12px;
+}
+
+.modules-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 6px;
+}
+
+.modules-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 6px;
+}
+
+.modules-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.sticky-scrollbar {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: white;
+  border-top: 1px solid #ddd;
+  z-index: 100;
+  margin-top: 1rem;
+}
+
+.sticky-scrollbar-content {
+  height: 1px;
 }
 
 .module-lane {

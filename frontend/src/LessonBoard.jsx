@@ -252,6 +252,10 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
   const [editingModuleRef, setEditingModuleRef] = useState(null)
   const [showModuleRefModal, setShowModuleRefModal] = useState(false)
   const [activeId, setActiveId] = useState(null)
+  const modulesContainerRef = useRef(null)
+  const stickyScrollbarRef = useRef(null)
+  const [scrollWidth, setScrollWidth] = useState(0)
+  const [hideSticky, setHideSticky] = useState(false)
 
   const handleEditLesson = (lesson) => {
     setEditingLesson(lesson)
@@ -453,6 +457,46 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
     ), false)
   }
 
+  useEffect(() => {
+    const updateScrollWidth = () => {
+      if (modulesContainerRef.current) {
+        setScrollWidth(modulesContainerRef.current.scrollWidth)
+      }
+    }
+    updateScrollWidth()
+    window.addEventListener('resize', updateScrollWidth)
+    return () => window.removeEventListener('resize', updateScrollWidth)
+  }, [modules, lessons])
+
+  useEffect(() => {
+    const handlePageScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+      const windowHeight = window.innerHeight
+      const documentHeight = document.documentElement.scrollHeight
+      
+      // Hide sticky scrollbar when within 100px of bottom
+      const isNearBottom = scrollTop + windowHeight >= documentHeight - 100
+      setHideSticky(isNearBottom)
+    }
+
+    window.addEventListener('scroll', handlePageScroll)
+    handlePageScroll() // Check initial state
+    
+    return () => window.removeEventListener('scroll', handlePageScroll)
+  }, [])
+
+  const handleMainScroll = () => {
+    if (modulesContainerRef.current && stickyScrollbarRef.current) {
+      stickyScrollbarRef.current.scrollLeft = modulesContainerRef.current.scrollLeft
+    }
+  }
+
+  const handleStickyScroll = () => {
+    if (modulesContainerRef.current && stickyScrollbarRef.current) {
+      modulesContainerRef.current.scrollLeft = stickyScrollbarRef.current.scrollLeft
+    }
+  }
+
   return (
     <div className="lesson-board">
       <div className="board-header">
@@ -470,7 +514,8 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="modules-container">
+        <div className="modules-scroll-wrapper">
+          <div className="modules-container" ref={modulesContainerRef} onScroll={handleMainScroll}>
           <SortableContext
             items={modules.map(m => m.id)}
             strategy={horizontalListSortingStrategy}
@@ -607,6 +652,13 @@ function LessonBoard({ lessons = [], modules = [], onLessonsUpdate, onModulesUpd
               </SortableModule>
             ))}
           </SortableContext>
+          </div>
+          
+          {!hideSticky && (
+            <div className="sticky-scrollbar" ref={stickyScrollbarRef} onScroll={handleStickyScroll}>
+              <div className="sticky-scrollbar-content" style={{ width: scrollWidth }}></div>
+            </div>
+          )}
         </div>
         
         <DragOverlay>

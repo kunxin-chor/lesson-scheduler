@@ -1,4 +1,4 @@
-export function generateClassSlots(startDate, classSlotPatterns, exceptions, numberOfWeeks = 52, numberOfLessons = null, endDate = null, lessonPlan = null) {
+export function generateClassSlots(startDate, classSlotPatterns, exceptions, numberOfWeeks = 52, numberOfLessons = null, endDate = null, lessonPlan = null, dayGapBetweenModules = 0) {
   console.log('🎯 generateClassSlots called with:', {
     startDate,
     classSlotPatterns,
@@ -6,32 +6,69 @@ export function generateClassSlots(startDate, classSlotPatterns, exceptions, num
     numberOfWeeks,
     numberOfLessons,
     endDate,
-    lessonPlan: lessonPlan ? lessonPlan.name : 'none'
+    lessonPlan: lessonPlan ? lessonPlan.name : 'none',
+    dayGapBetweenModules
   })
   
   const slots = []
   const startDateObj = new Date(startDate)
   
   // Flatten all lessons from all modules if lessonPlan is provided
+  // Also track module boundaries for gap insertion
   let allLessons = []
+  let moduleBoundaries = [] // Array of lesson indices where modules end
+  
   if (lessonPlan) {
     if (lessonPlan.lessons && Array.isArray(lessonPlan.lessons)) {
       // Flat lessons array (from backend transformation)
-      allLessons = lessonPlan.lessons
+      // Sort modules first, then group lessons by module
+      if (lessonPlan.modules) {
+        const sortedModules = [...lessonPlan.modules].sort((a, b) => a.order - b.order)
+        sortedModules.forEach(module => {
+          const moduleLessons = lessonPlan.lessons
+            .filter(l => l.moduleId === module.id)
+            .sort((a, b) => a.order - b.order)
+            .map(lesson => ({
+              ...lesson,
+              moduleName: module.name
+            }))
+          
+          allLessons = allLessons.concat(moduleLessons)
+          
+          // Mark the end of this module
+          if (allLessons.length < (numberOfLessons || Infinity)) {
+            moduleBoundaries.push(allLessons.length)
+          }
+        })
+      } else {
+        // No modules, just use lessons as-is
+        allLessons = [...lessonPlan.lessons].sort((a, b) => a.order - b.order)
+      }
     } else if (lessonPlan.modules) {
-      // Nested in modules
-      lessonPlan.modules.forEach(module => {
+      // Nested in modules - sort modules first
+      const sortedModules = [...lessonPlan.modules].sort((a, b) => a.order - b.order)
+      sortedModules.forEach(module => {
         if (module.lessons) {
-          allLessons = allLessons.concat(module.lessons.map(lesson => ({
-            ...lesson,
-            moduleName: module.name
-          })))
+          const moduleLessons = [...module.lessons]
+            .sort((a, b) => a.order - b.order)
+            .map(lesson => ({
+              ...lesson,
+              moduleName: module.name,
+              moduleId: module.id
+            }))
+          allLessons = allLessons.concat(moduleLessons)
+          
+          // Mark the end of this module
+          if (allLessons.length < (numberOfLessons || Infinity)) {
+            moduleBoundaries.push(allLessons.length)
+          }
         }
       })
     }
-    // Sort by order
-    allLessons.sort((a, b) => a.order - b.order)
   }
+  
+  console.log('🎯 Module boundaries at lesson indices:', moduleBoundaries)
+  console.log('🎯 Lesson order:', allLessons.map(l => `${l.moduleId}-${l.title}`))
   
   // Convert exceptions to date strings, handling ISO dates properly to avoid timezone issues
   const exceptionDates = new Set(exceptions.map(d => {
@@ -59,6 +96,7 @@ export function generateClassSlots(startDate, classSlotPatterns, exceptions, num
   })
   
   let currentDate = new Date(startDateObj)
+  let lastModuleBoundaryIndex = -1
   
   while (currentDate <= finalEndDate) {
     // Stop if we've reached the numberOfLessons limit
@@ -75,6 +113,8 @@ export function generateClassSlots(startDate, classSlotPatterns, exceptions, num
     
     if (!exceptionDates.has(dateString)) {
       const matchingPatterns = classSlotPatterns.filter(p => p.dayOfWeek === dayOfWeek)
+      
+      let moduleGapApplied = false
       
       for (const pattern of matchingPatterns) {
         // Check limit before adding each slot
@@ -113,6 +153,25 @@ export function generateClassSlots(startDate, classSlotPatterns, exceptions, num
             })
           }
         }
+        
+        // After adding a slot, check if we just completed a module
+        const justAddedIndex = slots.length
+        const crossedBoundary = moduleBoundaries.find(
+          boundary => boundary === justAddedIndex && boundary > lastModuleBoundaryIndex
+        )
+        
+        if (crossedBoundary !== undefined && dayGapBetweenModules > 0) {
+          console.log(`🎯 Completed module at lesson ${crossedBoundary}, adding ${dayGapBetweenModules} day gap`)
+          currentDate.setDate(currentDate.getDate() + dayGapBetweenModules - 1)
+          lastModuleBoundaryIndex = crossedBoundary
+          moduleGapApplied = true
+          break
+        }
+      }
+      
+      if (moduleGapApplied) {
+        currentDate.setDate(currentDate.getDate() + 1)
+        continue
       }
     }
     

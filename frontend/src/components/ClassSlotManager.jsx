@@ -55,21 +55,38 @@ function ClassSlotManager({ show, onHide, intake, classSlots, onSlotsUpdate, les
         
         if (lessonPlan.lessons && Array.isArray(lessonPlan.lessons)) {
           // Flat lessons array (from backend transformation)
-          allLessons = lessonPlan.lessons
+          // Need to add moduleName from modules
+          if (lessonPlan.modules) {
+            const sortedModules = [...lessonPlan.modules].sort((a, b) => a.order - b.order)
+            sortedModules.forEach(module => {
+              const moduleLessons = lessonPlan.lessons
+                .filter(l => l.moduleId === module.id)
+                .sort((a, b) => a.order - b.order)
+                .map(lesson => ({
+                  ...lesson,
+                  moduleName: module.name
+                }))
+              allLessons = allLessons.concat(moduleLessons)
+            })
+          } else {
+            allLessons = [...lessonPlan.lessons].sort((a, b) => a.order - b.order)
+          }
         } else if (lessonPlan.modules) {
           // Nested in modules
-          lessonPlan.modules.forEach(module => {
+          const sortedModules = [...lessonPlan.modules].sort((a, b) => a.order - b.order)
+          sortedModules.forEach(module => {
             if (module.lessons) {
-              allLessons = allLessons.concat(module.lessons.map(lesson => ({
-                ...lesson,
-                moduleName: module.name
-              })))
+              const moduleLessons = [...module.lessons]
+                .sort((a, b) => a.order - b.order)
+                .map(lesson => ({
+                  ...lesson,
+                  moduleName: module.name,
+                  moduleId: module.id
+                }))
+              allLessons = allLessons.concat(moduleLessons)
             }
           })
         }
-        
-        // Sort by order
-        allLessons.sort((a, b) => a.order - b.order)
         
         console.log('🔧 Total lessons found:', allLessons.length)
         console.log('🔧 First lesson:', allLessons[0])

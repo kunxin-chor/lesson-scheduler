@@ -61,6 +61,7 @@
     timeSlot: String (enum: ['morning', 'afternoon', 'evening'], required),
     isManuallyAdded: Boolean (default: false)
   }], // Generated class slots based on patterns and exceptions
+  dayGapBetweenModules: Number (default: 0), // Number of days to skip between modules during slot generation
   status: String (enum: ['active', 'completed', 'archived'], default: 'active'),
   createdAt: Date (default: Date.now),
   updatedAt: Date (default: Date.now)
@@ -122,8 +123,12 @@
 - **exceptions**: Array of ISO date strings (YYYY-MM-DD) to skip
   - Used for public holidays and other skip dates
   - Admin manually enters these dates when creating/updating intake
+- **dayGapBetweenModules**: Number of days to skip between modules during slot generation
+  - Used only during slot generation, not stored in modules themselves
+  - Allows automatic spacing between modules (e.g., 7 days for a week break)
+  - Default is 0 (no gap between modules)
 - **classSlots**: Generated array of actual class slots
-  - Automatically generated based on `startDate`, `classSlotPatterns`, and `exceptions`
+  - Automatically generated based on `startDate`, `classSlotPatterns`, `exceptions`, and `dayGapBetweenModules`
   - Each slot has: `id`, `date`, `dayOfWeek`, `timeSlot`, and `isManuallyAdded` flag
   - Admin can manually add/delete individual slots after generation
 

@@ -8,6 +8,7 @@ export async function createIntake(intakeInfo) {
     classSlotPatterns: intakeInfo.classSlotPatterns || [],
     exceptions: intakeInfo.exceptions || [],
     classSlots: intakeInfo.classSlots || [],
+    dayGapBetweenModules: intakeInfo.dayGapBetweenModules || 0,
     status: 'active'
   };
   
@@ -31,6 +32,7 @@ export async function updateIntake(id, updateInfo) {
   if (updateInfo.classSlotPatterns) updateData.classSlotPatterns = updateInfo.classSlotPatterns;
   if (updateInfo.exceptions) updateData.exceptions = updateInfo.exceptions;
   if (updateInfo.classSlots) updateData.classSlots = updateInfo.classSlots;
+  if (updateInfo.dayGapBetweenModules !== undefined) updateData.dayGapBetweenModules = updateInfo.dayGapBetweenModules;
   if (updateInfo.status) updateData.status = updateInfo.status;
   
   return await intakeData.updateIntake(id, updateData);
