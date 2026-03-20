@@ -36,6 +36,15 @@
       updatedAt: Date (default: Date.now)
     }]
   }],
+  assignments: [{
+    id: String (required), // e.g., 'assignment-1234567890'
+    title: String (required),
+    description: String, // Markdown content
+    durationDays: Number (required), // Number of days the assignment spans
+    order: Number (required), // For ordering assignments in the lesson plan
+    createdAt: Date (default: Date.now),
+    updatedAt: Date (default: Date.now)
+  }],
   createdAt: Date (default: Date.now),
   updatedAt: Date (default: Date.now)
 }

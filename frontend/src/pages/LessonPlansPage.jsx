@@ -12,7 +12,7 @@ function LessonPlansPage() {
   const [location, setLocation] = useLocation()
   const [match, params] = useRoute('/lesson-plans/:planId')
   
-  const { lessonPlans, selectedPlan, modules, lessons, showCreateForm, saveStatus, lastSaved, loading, error } = state
+  const { lessonPlans, selectedPlan, modules, lessons, assignments, showCreateForm, saveStatus, lastSaved, loading, error } = state
 
   const performSave = useCallback(async () => {
     if (!selectedPlan) return
@@ -21,15 +21,14 @@ function LessonPlansPage() {
     
     try {
       // Generate database-compatible JSON
-      console.log('📊 Lessons before transform:', lessons.map(l => ({
-        id: l.id,
-        title: l.title,
-        prelearning: l.prelearningMaterials?.substring(0, 50) || 'EMPTY',
-        guided: l.guidedInstructions?.substring(0, 50) || 'EMPTY',
-        handsOn: l.handsOnActivities?.substring(0, 50) || 'EMPTY'
-      })))
+      console.log('📊 Before transform:', {
+        modulesCount: modules.length,
+        lessonsCount: lessons.length,
+        assignmentsCount: assignments.length,
+        assignments: assignments
+      })
       
-      const dbJSON = transformToBackend(selectedPlan, modules, lessons)
+      const dbJSON = transformToBackend(selectedPlan, modules, lessons, assignments)
       
       console.log('=== LESSON PLAN JSON FOR DATABASE ===')
       console.log(JSON.stringify(dbJSON, null, 2))
@@ -47,7 +46,7 @@ function LessonPlansPage() {
       dispatch({ type: LESSON_PLAN_ACTIONS.SET_SAVE_STATUS, payload: 'unsaved' })
       dispatch({ type: LESSON_PLAN_ACTIONS.SET_ERROR, payload: 'Failed to save changes' })
     }
-  }, [selectedPlan, modules, lessons])
+  }, [selectedPlan, modules, lessons, assignments])
 
   const debouncedSave = () => {
     dispatch({ type: LESSON_PLAN_ACTIONS.SET_SAVE_STATUS, payload: 'unsaved' })
@@ -74,7 +73,12 @@ function LessonPlansPage() {
     dispatch({ type: LESSON_PLAN_ACTIONS.SET_SAVE_STATUS, payload: 'unsaved' })
   }
 
-  // Auto-save when lessons or modules change
+  const handleAssignmentsUpdate = (updatedAssignments, isStructuralChange = false) => {
+    dispatch({ type: LESSON_PLAN_ACTIONS.UPDATE_ASSIGNMENTS, payload: updatedAssignments })
+    dispatch({ type: LESSON_PLAN_ACTIONS.SET_SAVE_STATUS, payload: 'unsaved' })
+  }
+
+  // Auto-save when lessons, modules, or assignments change
   useEffect(() => {
     if (!selectedPlan || saveStatus === 'saved' || saveStatus === 'saving') return
     
@@ -93,7 +97,7 @@ function LessonPlansPage() {
         clearTimeout(debounceTimerRef.current)
       }
     }
-  }, [lessons, modules, selectedPlan, saveStatus, performSave])
+  }, [lessons, modules, assignments, selectedPlan, saveStatus, performSave])
 
   // Fetch lesson plans on mount
   useEffect(() => {
@@ -254,7 +258,7 @@ function LessonPlansPage() {
             </div>
             <div className="d-flex gap-2 align-items-center">
               <span style={{ fontSize: '0.75rem', color: '#5e6c84' }}>
-                {modules.length} modules · {lessons.length} lessons
+                {modules.length} modules · {lessons.length} lessons · {assignments.length} assignments
               </span>
               {saveStatus === 'saving' && (
                 <span style={{ fontSize: '0.75rem', color: '#0079bf', fontWeight: 500 }}>
@@ -285,8 +289,10 @@ function LessonPlansPage() {
         <LessonBoard 
           lessons={lessons}
           modules={modules}
+          assignments={assignments}
           onLessonsUpdate={handleLessonsUpdate}
           onModulesUpdate={handleModulesUpdate}
+          onAssignmentsUpdate={handleAssignmentsUpdate}
           editable={true}
         />
       </div>

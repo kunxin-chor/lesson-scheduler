@@ -43,7 +43,8 @@ export async function createLessonPlan(lessonPlanInfo) {
   const lessonPlan = {
     name: lessonPlanInfo.name,
     description: lessonPlanInfo.description || '',
-    modules: convertIdsToObjectId(lessonPlanInfo.modules)
+    modules: convertIdsToObjectId(lessonPlanInfo.modules),
+    assignments: lessonPlanInfo.assignments || []
   };
   
   return await lessonPlanData.createLessonPlan(lessonPlan);
@@ -63,6 +64,7 @@ export async function updateLessonPlan(id, updateInfo) {
   if (updateInfo.name) updateData.name = updateInfo.name;
   if (updateInfo.description !== undefined) updateData.description = updateInfo.description;
   if (updateInfo.modules) updateData.modules = convertIdsToObjectId(updateInfo.modules);
+  if (updateInfo.assignments !== undefined) updateData.assignments = updateInfo.assignments;
   
   return await lessonPlanData.updateLessonPlan(id, updateData);
 }

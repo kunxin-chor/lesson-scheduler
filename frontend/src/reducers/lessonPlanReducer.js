@@ -19,6 +19,10 @@ export const LESSON_PLAN_ACTIONS = {
   SET_LESSONS: 'SET_LESSONS',
   UPDATE_LESSONS: 'UPDATE_LESSONS',
   
+  // Assignments
+  SET_ASSIGNMENTS: 'SET_ASSIGNMENTS',
+  UPDATE_ASSIGNMENTS: 'UPDATE_ASSIGNMENTS',
+  
   // UI State
   TOGGLE_CREATE_FORM: 'TOGGLE_CREATE_FORM',
   SET_SAVE_STATUS: 'SET_SAVE_STATUS',
@@ -33,6 +37,7 @@ export const initialState = {
   selectedPlan: null,
   modules: [],
   lessons: [],
+  assignments: [],
   showCreateForm: false,
   saveStatus: 'saved', // 'saved', 'saving', 'unsaved'
   lastSaved: null,
@@ -72,6 +77,7 @@ export function lessonPlanReducer(state, action) {
         ...action.payload,
         modules: state.modules,
         lessons: state.lessons,
+        assignments: state.assignments,
         updatedAt: new Date(),
       }
       return {
@@ -91,6 +97,7 @@ export function lessonPlanReducer(state, action) {
         selectedPlan: state.selectedPlan?.id === planId ? null : state.selectedPlan,
         modules: state.selectedPlan?.id === planId ? [] : state.modules,
         lessons: state.selectedPlan?.id === planId ? [] : state.lessons,
+        assignments: state.selectedPlan?.id === planId ? [] : state.assignments,
       }
     }
 
@@ -116,6 +123,7 @@ export function lessonPlanReducer(state, action) {
         selectedPlan: plan,
         modules: plan.modules || [],
         lessons: plan.lessons || [],
+        assignments: plan.assignments || [],
       }
     }
 
@@ -125,6 +133,7 @@ export function lessonPlanReducer(state, action) {
         selectedPlan: null,
         modules: [],
         lessons: [],
+        assignments: [],
       }
 
     case LESSON_PLAN_ACTIONS.SET_MODULES:
@@ -149,6 +158,18 @@ export function lessonPlanReducer(state, action) {
       return {
         ...state,
         lessons: action.payload,
+      }
+
+    case LESSON_PLAN_ACTIONS.SET_ASSIGNMENTS:
+      return {
+        ...state,
+        assignments: action.payload,
+      }
+
+    case LESSON_PLAN_ACTIONS.UPDATE_ASSIGNMENTS:
+      return {
+        ...state,
+        assignments: action.payload,
       }
 
     case LESSON_PLAN_ACTIONS.TOGGLE_CREATE_FORM:

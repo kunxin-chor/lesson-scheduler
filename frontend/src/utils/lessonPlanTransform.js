@@ -3,6 +3,7 @@ export function transformFromBackend(backendPlan) {
   if (!backendPlan) return null;
 
   console.log('🔍 transformFromBackend - Raw backend plan:', backendPlan);
+  console.log('🔍 Assignments from backend:', backendPlan.assignments);
 
   // Flatten modules and lessons for the board view
   const modules = backendPlan.modules || [];
@@ -38,18 +39,19 @@ export function transformFromBackend(backendPlan) {
       referenceMaterials: m.referenceMaterials || '',
     })),
     lessons: lessons,
+    assignments: backendPlan.assignments || [],
     createdAt: backendPlan.createdAt,
     updatedAt: backendPlan.updatedAt,
   };
 }
 
 // Transform frontend lesson plan data to backend format
-export function transformToBackend(plan, modulesData, lessonsData) {
+export function transformToBackend(plan, modulesData, lessonsData, assignmentsData = []) {
   // Transform flat lessons array into nested structure within modules
-  const modulesWithLessons = modulesData.map((module, moduleIndex) => ({
+  const modulesWithLessons = modulesData.map((module) => ({
     id: module.id,
     name: module.name,
-    order: moduleIndex,
+    order: module.order, // Keep the actual order from the unified list
     referenceMaterials: module.referenceMaterials || '',
     lessons: lessonsData
       .filter(lesson => lesson.moduleId === module.id)
@@ -63,9 +65,19 @@ export function transformToBackend(plan, modulesData, lessonsData) {
       }))
   }));
 
+  // Transform assignments - preserve their order in the unified list
+  const assignments = assignmentsData.map((assignment) => ({
+    id: assignment.id,
+    title: assignment.title,
+    description: assignment.description || '',
+    durationDays: assignment.durationDays || 1,
+    order: assignment.order, // Keep the actual order from the unified list
+  }));
+
   return {
     name: plan.name,
     description: plan.description || '',
     modules: modulesWithLessons,
+    assignments: assignments,
   };
 }

@@ -538,6 +538,100 @@
   border: 2px dashed #007bff;
 }
 
+/* Assignment Lane - displayed inline with modules */
+.assignment-lane {
+  flex: 0 0 320px;
+  display: flex;
+  align-items: stretch;
+}
+
+/* Add Item Lane - at the end of modules */
+.add-item-lane {
+  flex: 0 0 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.add-item-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.assignment-lane-card {
+  width: 100%;
+  background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+  border: 2px solid #17a2b8;
+  border-radius: 6px;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 150px;
+}
+
+.assignment-lane-card:hover {
+  background: linear-gradient(135deg, #b2ebf2 0%, #80deea 100%);
+  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+  transform: translateY(-2px);
+}
+
+.assignment-lane-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid rgba(23, 162, 184, 0.3);
+}
+
+.assignment-lane-title {
+  flex: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.assignment-lane-title strong {
+  font-size: 0.875rem;
+  color: #00695c;
+  font-weight: 600;
+}
+
+.assignment-lane-description {
+  font-size: 0.8125rem;
+  color: #00695c;
+  line-height: 1.5;
+  flex: 1;
+  overflow-y: auto;
+  cursor: pointer;
+}
+
+.assignment-lane-description p {
+  margin-bottom: 0.5rem;
+}
+
+.assignment-lane-description p:last-child {
+  margin-bottom: 0;
+}
+
+.assignment-lane-description ul,
+.assignment-lane-description ol {
+  margin-bottom: 0.5rem;
+  padding-left: 1.25rem;
+}
+
+.assignment-lane-description code {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 0.125rem 0.25rem;
+  border-radius: 3px;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .modules-container {
