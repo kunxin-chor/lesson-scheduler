@@ -290,17 +290,32 @@ function ClassSlotManager({ show, onHide, intake, classSlots, onSlotsUpdate, les
                     filteredSlots.map((slot, index) => (
                       <tr key={slot.id}>
                         <td>{index + 1}</td>
-                        <td>{formatDate(slot.date)}</td>
+                        <td>
+                          {formatDate(slot.date)}
+                          {slot.type === 'assignment' && slot.endDate && (
+                            <div className="text-muted small">
+                              to {formatDate(slot.endDate)}
+                            </div>
+                          )}
+                        </td>
                         <td>
                           <Badge bg={
+                            slot.type === 'assignment' ? 'purple' :
                             slot.timeSlot === 'morning' ? 'info' :
                             slot.timeSlot === 'afternoon' ? 'warning' : 'dark'
-                          }>
-                            {slot.timeSlot}
+                          } style={slot.type === 'assignment' ? { backgroundColor: '#6f42c1' } : {}}>
+                            {slot.type === 'assignment' ? 'Assignment' : slot.timeSlot}
                           </Badge>
                         </td>
                         <td>
-                          {slot.lesson ? (
+                          {slot.type === 'assignment' && slot.item ? (
+                            <div>
+                              <strong>📋 {slot.item.title}</strong>
+                              <div className="text-muted small">
+                                {slot.item.durationDays} day{slot.item.durationDays !== 1 ? 's' : ''}
+                              </div>
+                            </div>
+                          ) : slot.lesson ? (
                             <div>
                               <strong>{slot.lesson.title}</strong>
                               {slot.lesson.moduleName && (
@@ -312,7 +327,9 @@ function ClassSlotManager({ show, onHide, intake, classSlots, onSlotsUpdate, les
                           )}
                         </td>
                         <td>
-                          {slot.isManuallyAdded ? (
+                          {slot.type === 'assignment' ? (
+                            <Badge style={{ backgroundColor: '#6f42c1' }}>Assignment</Badge>
+                          ) : slot.isManuallyAdded ? (
                             <Badge bg="success">Manual</Badge>
                           ) : (
                             <Badge bg="secondary">Generated</Badge>
@@ -320,7 +337,7 @@ function ClassSlotManager({ show, onHide, intake, classSlots, onSlotsUpdate, les
                         </td>
                         <td>
                           <div className="d-flex gap-1">
-                            {slot.lesson && (
+                            {(slot.lesson || slot.item) && (
                               <Button
                                 variant="outline-primary"
                                 size="sm"

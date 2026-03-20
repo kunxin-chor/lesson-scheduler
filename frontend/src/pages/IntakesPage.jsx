@@ -133,14 +133,16 @@ function IntakesPage() {
       console.log('🔄 Regenerating with config:', updatedConfig)
       console.log('🔄 Selected intake:', selectedIntake)
       
-      // Calculate numberOfLessons from lesson plan
+      // Calculate numberOfLessons from lesson plan (lessons + assignments)
       let numberOfLessons = null
       if (selectedIntake.lessonPlanId) {
         const lessonPlan = lessonPlans.find(p => p.id === selectedIntake.lessonPlanId)
         console.log('🔄 Found lesson plan:', lessonPlan)
-        if (lessonPlan?.lessons) {
-          numberOfLessons = lessonPlan.lessons.length
-          console.log('🔄 Lessons from plan:', numberOfLessons)
+        if (lessonPlan) {
+          const lessonsCount = lessonPlan.lessons?.length || 0
+          const assignmentsCount = lessonPlan.assignments?.length || 0
+          numberOfLessons = lessonsCount + assignmentsCount
+          console.log('🔄 Total items from plan:', numberOfLessons, `(${lessonsCount} lessons + ${assignmentsCount} assignments)`)
         }
       }
       
@@ -155,6 +157,11 @@ function IntakesPage() {
         ? lessonPlans.find(p => p.id === selectedIntake.lessonPlanId)
         : null
       
+      console.log('🔄 Lesson plan for regeneration:', lessonPlan)
+      console.log('🔄 Lesson plan assignments:', lessonPlan?.assignments)
+      console.log('🔄 Lesson plan modules:', lessonPlan?.modules?.length)
+      console.log('🔄 Lesson plan lessons:', lessonPlan?.lessons?.length)
+      
       // Generate class slots using the SAME function as create intake
       const classSlots = generateClassSlots(
         selectedIntake.startDate,
@@ -167,6 +174,9 @@ function IntakesPage() {
         updatedConfig.dayGapBetweenModules || 0 // day gap between modules
       )
       console.log('🔄 Generated slots count:', classSlots.length)
+      console.log('🔄 Assignment slots:', classSlots.filter(s => s.type === 'assignment'))
+      console.log('🔄 Lesson slots:', classSlots.filter(s => s.type === 'lesson').length)
+      
       // Send the generated slots along with patterns and exceptions
       const regeneratedIntake = await intakeService.regenerate(selectedIntake.id, {
         classSlotPatterns: updatedConfig.classSlotPatterns,

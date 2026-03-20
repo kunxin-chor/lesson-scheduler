@@ -32,6 +32,25 @@ function ClassSlotCalendarView({ slots, onAddSlot, onDeleteSlot, intake, lessonP
 
   const events = useMemo(() => {
     return slots.map(slot => {
+      // Handle assignment slots differently - they span multiple days
+      if (slot.type === 'assignment') {
+        const start = new Date(slot.date)
+        start.setHours(0, 0, 0)
+        
+        const end = new Date(slot.endDate)
+        end.setHours(23, 59, 59)
+        
+        return {
+          id: slot.id,
+          title: `📋 ${slot.item.title} (${slot.durationDays} days)`,
+          start,
+          end,
+          resource: slot,
+          allDay: true
+        }
+      }
+      
+      // Handle regular lesson slots
       const date = new Date(slot.date)
       let startHour, endHour
       
@@ -59,8 +78,8 @@ function ClassSlotCalendarView({ slots, onAddSlot, onDeleteSlot, intake, lessonP
       const end = new Date(date)
       end.setHours(endHour, 0, 0)
 
-      const lessonTitle = slot.lesson?.title || 'No Lesson'
-      const title = slot.lesson 
+      const lessonTitle = slot.lesson?.title || slot.item?.title || 'No Lesson'
+      const title = (slot.lesson || slot.item)
         ? `${lessonTitle}${slot.isManuallyAdded ? ' (Manual)' : ''}`
         : `${slot.timeSlot.charAt(0).toUpperCase() + slot.timeSlot.slice(1)}${slot.isManuallyAdded ? ' (Manual)' : ''}`
       
@@ -109,6 +128,22 @@ function ClassSlotCalendarView({ slots, onAddSlot, onDeleteSlot, intake, lessonP
     const slot = event.resource
     let backgroundColor = '#3174ad'
     
+    // Assignments get a distinct purple color
+    if (slot.type === 'assignment') {
+      backgroundColor = '#6f42c1'
+      return {
+        style: {
+          backgroundColor,
+          borderRadius: '5px',
+          opacity: 0.9,
+          color: 'white',
+          border: '2px solid #5a32a3',
+          display: 'block',
+          fontWeight: 'bold'
+        }
+      }
+    }
+    
     switch(slot.timeSlot) {
       case 'morning':
         backgroundColor = '#17a2b8'
@@ -145,6 +180,7 @@ function ClassSlotCalendarView({ slots, onAddSlot, onDeleteSlot, intake, lessonP
           <Badge bg="warning" text="dark">Afternoon (2pm-5pm)</Badge>
           <Badge bg="dark">Evening (7pm-10pm)</Badge>
           <Badge bg="success">Manual Slot</Badge>
+          <Badge style={{ backgroundColor: '#6f42c1' }}>📋 Assignment</Badge>
         </div>
       </div>
 
@@ -215,24 +251,45 @@ function ClassSlotCalendarView({ slots, onAddSlot, onDeleteSlot, intake, lessonP
           {selectedSlot && (
             <>
               <p><strong>Date:</strong> {format(new Date(selectedSlot.date), 'PPP')}</p>
+              {selectedSlot.type === 'assignment' && selectedSlot.endDate && (
+                <p><strong>End Date:</strong> {format(new Date(selectedSlot.endDate), 'PPP')}</p>
+              )}
               <p>
                 <strong>Time Slot:</strong>{' '}
                 <Badge bg={
+                  selectedSlot.type === 'assignment' ? 'purple' :
                   selectedSlot.timeSlot === 'morning' ? 'info' :
                   selectedSlot.timeSlot === 'afternoon' ? 'warning' : 'dark'
-                }>
-                  {selectedSlot.timeSlot}
+                } style={selectedSlot.type === 'assignment' ? { backgroundColor: '#6f42c1' } : {}}>
+                  {selectedSlot.type === 'assignment' ? 'Assignment' : selectedSlot.timeSlot}
                 </Badge>
               </p>
               <p>
                 <strong>Type:</strong>{' '}
-                {selectedSlot.isManuallyAdded ? (
+                {selectedSlot.type === 'assignment' ? (
+                  <Badge style={{ backgroundColor: '#6f42c1' }}>Assignment ({selectedSlot.durationDays} days)</Badge>
+                ) : selectedSlot.isManuallyAdded ? (
                   <Badge bg="success">Manual</Badge>
                 ) : (
                   <Badge bg="secondary">Generated</Badge>
                 )}
               </p>
-              {selectedSlot.lesson ? (
+              {selectedSlot.type === 'assignment' && selectedSlot.item ? (
+                <>
+                  <hr />
+                  <h6>Assignment Details</h6>
+                  <p><strong>Title:</strong> {selectedSlot.item.title}</p>
+                  <p><strong>Duration:</strong> {selectedSlot.item.durationDays} day{selectedSlot.item.durationDays !== 1 ? 's' : ''}</p>
+                  {selectedSlot.item.description && (
+                    <div className="mb-3">
+                      <strong>Description:</strong>
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <ReactMarkdown>{selectedSlot.item.description}</ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : selectedSlot.lesson ? (
                 <>
                   <hr />
                   <h6>Lesson Details</h6>
