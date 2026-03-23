@@ -22,6 +22,9 @@ function Navigation() {
             <Nav.Link as={Link} href="/intakes" eventKey="/intakes">
               � Intakes
             </Nav.Link>
+            <Nav.Link as={Link} href="/students/intakes" eventKey="/students/intakes">
+              Student View
+            </Nav.Link>
           </Nav>
         </Navbar.Collapse>
       </Container>

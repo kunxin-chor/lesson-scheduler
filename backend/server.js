@@ -4,6 +4,7 @@ import { connectDB } from './config/db.js';
 import intakeRoutes from './routes/intakeRoutes.js';
 import lessonPlanRoutes from './routes/lessonPlanRoutes.js';
 import linkMetadataRoutes from './routes/linkMetadataRoutes.js';
+import studentRoutes from './routes/studentRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use('/api/intakes', intakeRoutes);
 app.use('/api/lesson-plans', lessonPlanRoutes);
 app.use('/api/link-metadata', linkMetadataRoutes);
+app.use('/api/students', studentRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
