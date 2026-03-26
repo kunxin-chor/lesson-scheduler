@@ -55,3 +55,59 @@ export async function regenerateIntake(id, newPatterns, newExceptions, newClassS
   
   return await intakeData.updateIntake(id, updateData);
 }
+
+export function parseBulkSlotString(bulkString) {
+  const entries = bulkString.split(',').map(s => s.trim()).filter(s => s);
+  const slots = [];
+  
+  for (const entry of entries) {
+    const match = entry.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s*([MAE])$/i);
+    if (match) {
+      const [, day, month, year] = match;
+      const timeSlotCode = match[4].toUpperCase();
+      
+      const timeSlotMap = {
+        'M': 'morning',
+        'A': 'afternoon',
+        'E': 'evening'
+      };
+      
+      const timeSlot = timeSlotMap[timeSlotCode];
+      if (!timeSlot) continue;
+      
+      const date = new Date(year, parseInt(month) - 1, parseInt(day));
+      
+      slots.push({
+        id: `slot-${date.getTime()}-${timeSlot}-bulk`,
+        date: date,
+        dayOfWeek: date.getDay(),
+        timeSlot: timeSlot,
+        isManuallyAdded: true
+      });
+    }
+  }
+  
+  return slots.sort((a, b) => a.date - b.date);
+}
+
+export async function addBulkSlots(id, bulkString) {
+  const intake = await intakeData.getIntakeById(id);
+  if (!intake) return null;
+  
+  const newSlots = parseBulkSlotString(bulkString);
+  const existingSlots = intake.classSlots || [];
+  
+  const mergedSlots = [...existingSlots];
+  for (const newSlot of newSlots) {
+    const duplicate = existingSlots.find(
+      s => new Date(s.date).toDateString() === newSlot.date.toDateString() && s.timeSlot === newSlot.timeSlot
+    );
+    if (!duplicate) {
+      mergedSlots.push(newSlot);
+    }
+  }
+  
+  mergedSlots.sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  return await intakeData.updateClassSlots(id, mergedSlots);
+}

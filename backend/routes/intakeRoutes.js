@@ -10,5 +10,6 @@ router.put('/:id', intakeController.updateIntake);
 router.delete('/:id', intakeController.deleteIntake);
 router.patch('/:id/class-slots', intakeController.updateClassSlots);
 router.post('/:id/regenerate', intakeController.regenerateIntake);
+router.post('/:id/bulk-slots', intakeController.addBulkSlots);
 
 export default router;

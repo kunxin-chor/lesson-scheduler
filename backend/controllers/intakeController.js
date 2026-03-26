@@ -94,3 +94,19 @@ export async function regenerateIntake(req, res) {
     res.status(500).json({ error: error.message });
   }
 }
+
+export async function addBulkSlots(req, res) {
+  try {
+    const { bulkString } = req.body;
+    if (!bulkString) {
+      return res.status(400).json({ error: 'bulkString is required' });
+    }
+    const intake = await intakeService.addBulkSlots(req.params.id, bulkString);
+    if (!intake) {
+      return res.status(404).json({ error: 'Intake not found' });
+    }
+    res.json(transformIntake(intake));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
