@@ -79,12 +79,13 @@ export async function updateClassSlots(req, res) {
 
 export async function regenerateIntake(req, res) {
   try {
-    const { classSlotPatterns, exceptions, classSlots } = req.body;
+    const { classSlotPatterns, exceptions, classSlots, lessonSlotMap } = req.body;
     const intake = await intakeService.regenerateIntake(
       req.params.id,
       classSlotPatterns,
       exceptions,
-      classSlots
+      classSlots,
+      lessonSlotMap
     );
     if (!intake) {
       return res.status(404).json({ error: 'Intake not found' });

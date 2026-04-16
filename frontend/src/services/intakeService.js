@@ -69,17 +69,31 @@ export const intakeService = {
     return response.json();
   },
 
-  async regenerate(id, config) {
+  async regenerate(id, data) {
     const response = await fetch(`${API_BASE_URL}/intakes/${id}/regenerate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(config),
+      body: JSON.stringify(data),
     });
     if (!response.ok) {
       throw new Error('Failed to regenerate intake');
     }
     return response.json();
   },
+
+  async addBulkSlots(id, bulkString) {
+    const response = await fetch(`${API_BASE_URL}/intakes/${id}/bulk-slots`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ bulkString }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to add bulk slots');
+    }
+    return response.json();
+  }
 };

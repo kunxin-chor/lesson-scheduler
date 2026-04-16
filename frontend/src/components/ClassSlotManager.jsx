@@ -3,6 +3,7 @@ import { Modal, Button, Form, Table, Badge, Row, Col, ButtonGroup, Alert } from 
 import { addManualSlot, deleteSlot } from '../utils/classSlotGenerator'
 import ClassSlotCalendarView from './ClassSlotCalendarView'
 import ClassSlotDetailModal from './ClassSlotDetailModal'
+import BulkSlotInput from './BulkSlotInput'
 import { generateCalendarMarkdown } from '../utils/calendarMarkdownGenerator'
 import { exportCalendarToExcel } from '../utils/calendarExcelExporter'
 
@@ -250,6 +251,20 @@ function ClassSlotManager({ show, onHide, intake, classSlots, onSlotsUpdate, les
                 </Col>
               </Row>
             </div>
+
+            <BulkSlotInput onAddBulkSlots={(newSlots) => {
+              const mergedSlots = [...slots];
+              for (const newSlot of newSlots) {
+                const duplicate = slots.find(
+                  s => new Date(s.date).toDateString() === new Date(newSlot.date).toDateString() && s.timeSlot === newSlot.timeSlot
+                );
+                if (!duplicate) {
+                  mergedSlots.push(newSlot);
+                }
+              }
+              mergedSlots.sort((a, b) => new Date(a.date) - new Date(b.date));
+              setSlots(mergedSlots);
+            }} />
 
             <div className="mb-3 d-flex justify-content-between align-items-center">
               <h6>Slots ({filteredSlots.length})</h6>

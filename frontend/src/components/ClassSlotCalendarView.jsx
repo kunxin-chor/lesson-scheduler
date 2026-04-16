@@ -79,8 +79,15 @@ function ClassSlotCalendarView({ slots, onAddSlot, onDeleteSlot, intake, lessonP
       end.setHours(endHour, 0, 0)
 
       const lessonTitle = slot.lesson?.title || slot.item?.title || 'No Lesson'
+      
+      // Show slot number for multi-slot lessons
+      let slotInfo = ''
+      if (slot.totalSlots && slot.totalSlots > 1) {
+        slotInfo = ` [${slot.slotNumber}/${slot.totalSlots}]`
+      }
+      
       const title = (slot.lesson || slot.item)
-        ? `${lessonTitle}${slot.isManuallyAdded ? ' (Manual)' : ''}`
+        ? `${lessonTitle}${slotInfo}${slot.isManuallyAdded ? ' (Manual)' : ''}`
         : `${slot.timeSlot.charAt(0).toUpperCase() + slot.timeSlot.slice(1)}${slot.isManuallyAdded ? ' (Manual)' : ''}`
       
       return {

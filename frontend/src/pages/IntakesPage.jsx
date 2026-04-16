@@ -3,7 +3,7 @@ import { Container, Row, Col, Card, Button, Badge, Alert, Spinner } from 'react-
 import IntakeFormModal from '../components/IntakeFormModal'
 import ClassSlotManager from '../components/ClassSlotManager'
 import RegenerateCalendarModal from '../components/RegenerateCalendarModal'
-import { generateClassSlots, regenerateClassSlots } from '../utils/classSlotGenerator'
+import { generateClassSlots, generateClassSlotsV2, regenerateClassSlots } from '../utils/classSlotGenerator'
 import { intakeReducer, initialState, INTAKE_ACTIONS } from '../reducers/intakeReducer'
 import { intakeService } from '../services/intakeService'
 import { lessonPlanService } from '../services/lessonPlanService'
@@ -45,17 +45,26 @@ function IntakesPage() {
       : null
     
     // Generate class slots based on the selected method
-    const classSlots = generateClassSlots(
-      intakeData.startDate,
-      intakeData.classSlotPatterns,
-      intakeData.exceptions,
-      52, // numberOfWeeks (used only if no endDate or numberOfLessons)
-      intakeData.numberOfLessons, // numberOfLessons (for 'auto' or 'manual' methods)
-      intakeData.endDate, // endDate (for 'endDate' method)
-      lessonPlan, // lesson plan data
-      intakeData.dayGapBetweenModules || 0 // day gap between modules
-    )
-    console.log('🔍 Generated slots count:', classSlots.length)
+    let classSlots
+    if (intakeData.generationMethod === 'bulk' && intakeData.bulkSlots) {
+      // Use bulk slots directly
+      classSlots = intakeData.bulkSlots
+      console.log('🔍 Using bulk slots:', classSlots.length)
+    } else {
+      // Generate slots using the NEW V2 pattern-based method (clean, uses flat arrays only)
+      classSlots = generateClassSlotsV2(
+        intakeData.startDate,
+        intakeData.classSlotPatterns,
+        intakeData.exceptions,
+        52, // numberOfWeeks (used only if no endDate or numberOfLessons)
+        intakeData.numberOfLessons, // numberOfLessons (for 'auto' or 'manual' methods)
+        intakeData.endDate, // endDate (for 'endDate' method)
+        lessonPlan, // lesson plan data
+        intakeData.dayGapBetweenModules || 0, // day gap between modules
+        intakeData.lessonSlotMap || {} // lesson slot map
+      )
+      console.log('🔍 Generated slots count:', classSlots.length)
+    }
     const newIntakeData = {
       name: intakeData.name,
       lessonPlanId: intakeData.lessonPlanId,
@@ -64,12 +73,15 @@ function IntakesPage() {
       exceptions: intakeData.exceptions,
       classSlots: classSlots,
       dayGapBetweenModules: intakeData.dayGapBetweenModules || 0,
+      lessonSlotMap: intakeData.lessonSlotMap || {},
       status: 'active',
     }
+    console.log('📊 Creating intake with lessonSlotMap:', intakeData.lessonSlotMap)
     dispatch({ type: INTAKE_ACTIONS.SET_LOADING, payload: true })
     try {
       const createdIntake = await intakeService.create(newIntakeData)
       console.log('✅ Created intake from API:', createdIntake)
+      console.log('✅ Created intake.lessonSlotMap:', createdIntake?.lessonSlotMap)
       console.log('✅ Created intake.id:', createdIntake?.id)
       console.log('✅ Created intake._id:', createdIntake?._id)
       dispatch({ type: INTAKE_ACTIONS.CREATE_INTAKE, payload: createdIntake })
@@ -131,6 +143,7 @@ function IntakesPage() {
     dispatch({ type: INTAKE_ACTIONS.SET_LOADING, payload: true })
     try {
       console.log('🔄 Regenerating with config:', updatedConfig)
+      console.log('🔄 lessonSlotMap from config:', updatedConfig.lessonSlotMap)
       console.log('🔄 Selected intake:', selectedIntake)
       
       // Calculate numberOfLessons from lesson plan (lessons + assignments)
@@ -161,9 +174,11 @@ function IntakesPage() {
       console.log('🔄 Lesson plan assignments:', lessonPlan?.assignments)
       console.log('🔄 Lesson plan modules:', lessonPlan?.modules?.length)
       console.log('🔄 Lesson plan lessons:', lessonPlan?.lessons?.length)
+      console.log('🔄 First 3 lesson IDs from plan:', lessonPlan?.lessons?.slice(0, 3).map(l => l.id))
+      console.log('🔄 Lesson IDs in lessonSlotMap:', Object.keys(updatedConfig.lessonSlotMap))
       
-      // Generate class slots using the SAME function as create intake
-      const classSlots = generateClassSlots(
+      // Generate class slots using the NEW V2 function (clean, uses flat arrays only)
+      const classSlots = generateClassSlotsV2(
         selectedIntake.startDate,
         updatedConfig.classSlotPatterns,
         updatedConfig.exceptions,
@@ -171,7 +186,8 @@ function IntakesPage() {
         numberOfLessons, // Use calculated lesson count
         null, // endDate (null = use weeks)
         lessonPlan, // lesson plan data
-        updatedConfig.dayGapBetweenModules || 0 // day gap between modules
+        updatedConfig.dayGapBetweenModules || 0, // day gap between modules
+        updatedConfig.lessonSlotMap || {} // lesson slot map
       )
       console.log('🔄 Generated slots count:', classSlots.length)
       console.log('🔄 Assignment slots:', classSlots.filter(s => s.type === 'assignment'))
@@ -182,6 +198,7 @@ function IntakesPage() {
         classSlotPatterns: updatedConfig.classSlotPatterns,
         exceptions: updatedConfig.exceptions,
         dayGapBetweenModules: updatedConfig.dayGapBetweenModules,
+        lessonSlotMap: updatedConfig.lessonSlotMap,
         classSlots
       })
       dispatch({ type: INTAKE_ACTIONS.UPDATE_INTAKE, payload: regeneratedIntake })
@@ -240,6 +257,7 @@ function IntakesPage() {
             onHide={() => dispatch({ type: INTAKE_ACTIONS.TOGGLE_REGENERATE_MODAL, payload: false })}
             intake={selectedIntake}
             onRegenerate={handleRegenerateSubmit}
+            lessonPlans={lessonPlans}
           />
         </>
       )}

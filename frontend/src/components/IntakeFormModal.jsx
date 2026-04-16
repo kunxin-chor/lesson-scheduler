@@ -8,9 +8,12 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
   const [selectedDate, setSelectedDate] = useState('')
   const [numberOfLessons, setNumberOfLessons] = useState('')
   const [selectedLessonPlanId, setSelectedLessonPlanId] = useState('')
-  const [generationMethod, setGenerationMethod] = useState('auto') // 'auto', 'manual', 'endDate'
+  const [generationMethod, setGenerationMethod] = useState('auto') // 'auto', 'manual', 'endDate', 'bulk'
   const [endDate, setEndDate] = useState('')
   const [dayGapBetweenModules, setDayGapBetweenModules] = useState(0)
+  const [bulkSlotInput, setBulkSlotInput] = useState('')
+  const [lessonSlotMap, setLessonSlotMap] = useState({})
+  const [showLessonSlotConfig, setShowLessonSlotConfig] = useState(false)
 
   const daysOfWeek = [
     { value: 0, label: 'Sunday' },
@@ -115,6 +118,40 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
     }
   }
 
+  const parseBulkSlotString = (bulkString) => {
+    const entries = bulkString.split(',').map(s => s.trim()).filter(s => s)
+    const slots = []
+    
+    for (const entry of entries) {
+      const match = entry.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s*([MAE])$/i)
+      if (match) {
+        const [, day, month, year] = match
+        const timeSlotCode = match[4].toUpperCase()
+        
+        const timeSlotMap = {
+          'M': 'morning',
+          'A': 'afternoon',
+          'E': 'evening'
+        }
+        
+        const timeSlot = timeSlotMap[timeSlotCode]
+        if (!timeSlot) continue
+        
+        const date = new Date(year, parseInt(month) - 1, parseInt(day))
+        
+        slots.push({
+          id: `slot-${date.getTime()}-${timeSlot}-bulk`,
+          date: date,
+          dayOfWeek: date.getDay(),
+          timeSlot: timeSlot,
+          isManuallyAdded: true
+        })
+      }
+    }
+    
+    return slots.sort((a, b) => a.date - b.date)
+  }
+
   const handleGenerationMethodChange = (method) => {
     setGenerationMethod(method)
     
@@ -132,6 +169,8 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
     } else if (method === 'endDate') {
       setNumberOfLessons('')
       setEndDate('')
+    } else if (method === 'bulk') {
+      setBulkSlotInput('')
     }
   }
 
@@ -161,10 +200,13 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
       generationMethod,
       numberOfLessons: (generationMethod === 'auto' || generationMethod === 'manual') && numberOfLessons ? parseInt(numberOfLessons) : null,
       endDate: generationMethod === 'endDate' ? endDate : null,
-      dayGapBetweenModules: parseInt(dayGapBetweenModules) || 0
+      dayGapBetweenModules: parseInt(dayGapBetweenModules) || 0,
+      lessonSlotMap,
+      bulkSlots: generationMethod === 'bulk' ? parseBulkSlotString(bulkSlotInput) : null
     }
     
     console.log('📝 Final intakeData.numberOfLessons:', intakeData.numberOfLessons)
+    console.log('📝 Final intakeData.lessonSlotMap:', intakeData.lessonSlotMap)
     
     onSubmit(intakeData)
     resetForm()
@@ -180,6 +222,9 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
     setGenerationMethod('auto')
     setEndDate('')
     setDayGapBetweenModules(0)
+    setBulkSlotInput('')
+    setLessonSlotMap({})
+    setShowLessonSlotConfig(false)
   }
 
   const handleClose = () => {
@@ -229,19 +274,76 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
           </Form.Group>
 
           {selectedLessonPlanId && (
-            <Form.Group className="mb-3">
-              <Form.Label>Day Gap Between Modules</Form.Label>
-              <Form.Control
-                type="number"
-                min="0"
-                value={dayGapBetweenModules}
-                onChange={(e) => setDayGapBetweenModules(e.target.value)}
-                placeholder="0"
-              />
-              <Form.Text className="text-muted">
-                Number of days to skip between modules (0 = no gap)
-              </Form.Text>
-            </Form.Group>
+            <>
+              <Form.Group className="mb-3">
+                <Form.Label>Day Gap Between Modules</Form.Label>
+                <Form.Control
+                  type="number"
+                  min="0"
+                  value={dayGapBetweenModules}
+                  onChange={(e) => setDayGapBetweenModules(e.target.value)}
+                  placeholder="0"
+                />
+                <Form.Text className="text-muted">
+                  Number of days to skip between modules (0 = no gap)
+                </Form.Text>
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <Form.Label className="mb-0">Lesson Slot Configuration (Optional)</Form.Label>
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => setShowLessonSlotConfig(!showLessonSlotConfig)}
+                  >
+                    {showLessonSlotConfig ? 'Hide' : 'Configure Slots Per Lesson'}
+                  </Button>
+                </div>
+                <Form.Text className="text-muted d-block mb-2">
+                  By default, each lesson takes 1 slot. Configure specific lessons to span multiple slots.
+                </Form.Text>
+                
+                {showLessonSlotConfig && (() => {
+                  const selectedPlan = lessonPlans.find(p => p.id === selectedLessonPlanId)
+                  if (!selectedPlan || !selectedPlan.lessons) return null
+                  
+                  return (
+                    <div className="border rounded p-3 mt-2" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                      {selectedPlan.lessons.map((lesson, index) => (
+                        <div key={lesson.id} className="border rounded p-2 mb-2">
+                          <Row className="align-items-start">
+                            <Col md={8}>
+                              <small className="text-muted d-block mb-1">Lesson {index + 1}:</small>
+                              <div className="fw-medium">{lesson.title}</div>
+                            </Col>
+                            <Col md={4} className="text-end">
+                              <small className="text-muted d-block mb-1">Slots:</small>
+                              <Form.Control
+                                type="number"
+                                size="sm"
+                                min="1"
+                                max="10"
+                                value={lessonSlotMap[lesson.id] || 1}
+                                onChange={(e) => {
+                                  const value = parseInt(e.target.value) || 1
+                                  setLessonSlotMap({
+                                    ...lessonSlotMap,
+                                    [lesson.id]: value
+                                  })
+                                }}
+                                placeholder="1"
+                                style={{ width: '80px', display: 'inline-block' }}
+                              />
+                            </Col>
+                          </Row>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+              </Form.Group>
+            </>
           )}
 
           <Form.Group className="mb-3">
@@ -277,8 +379,19 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
                 checked={generationMethod === 'endDate'}
                 onChange={() => handleGenerationMethodChange('endDate')}
               />
-              <Form.Text className="text-muted d-block ms-4">
+              <Form.Text className="text-muted d-block ms-4 mb-2">
                 Generate slots until a specific end date
+              </Form.Text>
+              
+              <Form.Check
+                type="radio"
+                id="method-bulk"
+                label="Bulk Slot Input"
+                checked={generationMethod === 'bulk'}
+                onChange={() => handleGenerationMethodChange('bulk')}
+              />
+              <Form.Text className="text-muted d-block ms-4">
+                Manually specify exact dates and time slots using comma-delimited format
               </Form.Text>
             </div>
           </Form.Group>
@@ -331,13 +444,37 @@ function IntakeFormModal({ show, onHide, onSubmit, lessonPlans }) {
             </Form.Group>
           )}
 
+          {generationMethod === 'bulk' && (
+            <Form.Group className="mb-3">
+              <Form.Label>Bulk Slot Input</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={4}
+                value={bulkSlotInput}
+                onChange={(e) => setBulkSlotInput(e.target.value)}
+                placeholder="e.g., 01/12/2026 M, 03/12/2026 A, 05/12/2026 E"
+                required
+              />
+              <Form.Text className="text-muted">
+                Enter comma-separated dates in format: <strong>DD/MM/YYYY M/A/E</strong>
+                <br />
+                <em>M = Morning, A = Afternoon, E = Evening</em>
+                <br />
+                Example: <code>01/12/2026 M, 03/12/2026 A, 05/12/2026 E</code>
+              </Form.Text>
+            </Form.Group>
+          )}
+
           <Form.Group className="mb-3">
             <Form.Label>Start Date</Form.Label>
             <Form.Control
               type="date"
               name="startDate"
-              required
+              required={generationMethod !== 'bulk'}
             />
+            <Form.Text className="text-muted">
+              {generationMethod === 'bulk' ? 'Optional for bulk slot input' : 'Required'}
+            </Form.Text>
           </Form.Group>
 
           <Form.Group className="mb-4">

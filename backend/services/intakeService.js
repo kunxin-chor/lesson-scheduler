@@ -9,6 +9,7 @@ export async function createIntake(intakeInfo) {
     exceptions: intakeInfo.exceptions || [],
     classSlots: intakeInfo.classSlots || [],
     dayGapBetweenModules: intakeInfo.dayGapBetweenModules || 0,
+    lessonSlotMap: intakeInfo.lessonSlotMap || {},
     status: 'active'
   };
   
@@ -33,6 +34,7 @@ export async function updateIntake(id, updateInfo) {
   if (updateInfo.exceptions) updateData.exceptions = updateInfo.exceptions;
   if (updateInfo.classSlots) updateData.classSlots = updateInfo.classSlots;
   if (updateInfo.dayGapBetweenModules !== undefined) updateData.dayGapBetweenModules = updateInfo.dayGapBetweenModules;
+  if (updateInfo.lessonSlotMap !== undefined) updateData.lessonSlotMap = updateInfo.lessonSlotMap;
   if (updateInfo.status) updateData.status = updateInfo.status;
   
   return await intakeData.updateIntake(id, updateData);
@@ -46,12 +48,16 @@ export async function updateClassSlots(id, classSlots) {
   return await intakeData.updateClassSlots(id, classSlots);
 }
 
-export async function regenerateIntake(id, newPatterns, newExceptions, newClassSlots) {
+export async function regenerateIntake(id, newPatterns, newExceptions, newClassSlots, newLessonSlotMap) {
   const updateData = {
     classSlotPatterns: newPatterns,
     exceptions: newExceptions,
     classSlots: newClassSlots
   };
+  
+  if (newLessonSlotMap !== undefined) {
+    updateData.lessonSlotMap = newLessonSlotMap;
+  }
   
   return await intakeData.updateIntake(id, updateData);
 }

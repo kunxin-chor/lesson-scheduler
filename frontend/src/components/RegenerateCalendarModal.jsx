@@ -1,19 +1,42 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Modal, Button, Form, ListGroup, Badge, Row, Col } from 'react-bootstrap'
 
-function RegenerateCalendarModal({ show, onHide, intake, onRegenerate }) {
-  const [classSlotPatterns, setClassSlotPatterns] = useState(() => {
-    if (!intake?.classSlotPatterns) return {}
-    const patterns = {}
-    intake.classSlotPatterns.forEach(p => {
-      patterns[`${p.dayOfWeek}-${p.timeSlot}`] = p.frequency || 1
-    })
-    return patterns
-  })
-  const [exceptions, setExceptions] = useState(intake?.exceptions || [])
+function RegenerateCalendarModal({ show, onHide, intake, onRegenerate, lessonPlans }) {
+  const [classSlotPatterns, setClassSlotPatterns] = useState({})
+  const [exceptions, setExceptions] = useState([])
   const [exceptionInput, setExceptionInput] = useState('')
   const [selectedDate, setSelectedDate] = useState('')
-  const [dayGapBetweenModules, setDayGapBetweenModules] = useState(intake?.dayGapBetweenModules || 0)
+  const [dayGapBetweenModules, setDayGapBetweenModules] = useState(0)
+  const [lessonSlotMap, setLessonSlotMap] = useState({})
+  const [showLessonSlotConfig, setShowLessonSlotConfig] = useState(false)
+
+  // Reset state whenever intake changes
+  useEffect(() => {
+    if (intake) {
+      // Reset class slot patterns
+      const patterns = {}
+      if (intake.classSlotPatterns) {
+        intake.classSlotPatterns.forEach(p => {
+          patterns[`${p.dayOfWeek}-${p.timeSlot}`] = p.frequency || 1
+        })
+      }
+      setClassSlotPatterns(patterns)
+      
+      // Reset exceptions
+      setExceptions(intake.exceptions || [])
+      
+      // Reset day gap
+      setDayGapBetweenModules(intake.dayGapBetweenModules || 0)
+      
+      // Reset lesson slot map
+      setLessonSlotMap(intake.lessonSlotMap || {})
+      
+      // Clear input fields
+      setExceptionInput('')
+      setSelectedDate('')
+      setShowLessonSlotConfig(false)
+    }
+  }, [intake])
 
   const daysOfWeek = [
     { value: 0, label: 'Sunday' },
@@ -110,7 +133,8 @@ function RegenerateCalendarModal({ show, onHide, intake, onRegenerate }) {
     onRegenerate({
       classSlotPatterns: patternsArray,
       exceptions,
-      dayGapBetweenModules: parseInt(dayGapBetweenModules) || 0
+      dayGapBetweenModules: parseInt(dayGapBetweenModules) || 0,
+      lessonSlotMap
     })
     onHide()
   }
@@ -134,19 +158,79 @@ function RegenerateCalendarModal({ show, onHide, intake, onRegenerate }) {
         </div>
 
         {intake?.lessonPlanId && (
-          <Form.Group className="mb-3">
-            <Form.Label>Day Gap Between Modules</Form.Label>
-            <Form.Control
-              type="number"
-              min="0"
-              value={dayGapBetweenModules}
-              onChange={(e) => setDayGapBetweenModules(e.target.value)}
-              placeholder="0"
-            />
-            <Form.Text className="text-muted">
-              Number of days to skip between modules (0 = no gap)
-            </Form.Text>
-          </Form.Group>
+          <>
+            <Form.Group className="mb-3">
+              <Form.Label>Day Gap Between Modules</Form.Label>
+              <Form.Control
+                type="number"
+                min="0"
+                value={dayGapBetweenModules}
+                onChange={(e) => setDayGapBetweenModules(e.target.value)}
+                placeholder="0"
+              />
+              <Form.Text className="text-muted">
+                Number of days to skip between modules (0 = no gap)
+              </Form.Text>
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <Form.Label className="mb-0">Lesson Slot Configuration (Optional)</Form.Label>
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  onClick={() => setShowLessonSlotConfig(!showLessonSlotConfig)}
+                >
+                  {showLessonSlotConfig ? 'Hide' : 'Configure Slots Per Lesson'}
+                </Button>
+              </div>
+              <Form.Text className="text-muted d-block mb-2">
+                By default, each lesson takes 1 slot. Configure specific lessons to span multiple slots.
+              </Form.Text>
+              
+              {showLessonSlotConfig && (() => {
+                const selectedPlan = lessonPlans?.find(p => p.id === intake.lessonPlanId)
+                console.log('🎨 Modal: Selected plan ID:', intake.lessonPlanId)
+                console.log('🎨 Modal: Found plan:', selectedPlan?.name)
+                console.log('🎨 Modal: First 3 lesson IDs:', selectedPlan?.lessons?.slice(0, 3).map(l => ({ id: l.id, title: l.title })))
+                if (!selectedPlan || !selectedPlan.lessons) return null
+                
+                return (
+                  <div className="border rounded p-3 mt-2" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {selectedPlan.lessons.map((lesson, index) => (
+                      <div key={lesson.id} className="border rounded p-2 mb-2">
+                        <Row className="align-items-start">
+                          <Col md={8}>
+                            <small className="text-muted d-block mb-1">Lesson {index + 1}:</small>
+                            <div className="fw-medium">{lesson.title}</div>
+                          </Col>
+                          <Col md={4} className="text-end">
+                            <small className="text-muted d-block mb-1">Slots:</small>
+                            <Form.Control
+                              type="number"
+                              size="sm"
+                              min="1"
+                              max="10"
+                              value={lessonSlotMap[lesson.id] || 1}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value) || 1
+                                setLessonSlotMap({
+                                  ...lessonSlotMap,
+                                  [lesson.id]: value
+                                })
+                              }}
+                              placeholder="1"
+                              style={{ width: '80px', display: 'inline-block' }}
+                            />
+                          </Col>
+                        </Row>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+            </Form.Group>
+          </>
         )}
 
         <Form.Group className="mb-4">
